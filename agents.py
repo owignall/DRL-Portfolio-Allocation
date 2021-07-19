@@ -341,7 +341,7 @@ class V2SingleStockWeightingDQNAgentWithDNN:
             xs.append(state)
             ys.append(qs)
         # Perform gradient descent step
-        self.network.fit(np.array(xs), np.array(ys), batch_size=64, verbose=verbose, shuffle=False)
+        self.network.fit(np.array(xs), np.array(ys), batch_size=128, verbose=verbose, shuffle=False)
 
     def train(self, episodes=1, verbose=0, save_figs=False):
         step = 1
