@@ -278,7 +278,7 @@ class V2SingleStockWeightingDQNAgentWithDNN:
         self.epsilon = 0.1
         self.alpha = 0.005
         self.c = 100
-        self.d_min = 5000
+        self.d_min = 2000
         self.d_max = 100000
         self.number_of_replays = 1000
         # Other attributes
