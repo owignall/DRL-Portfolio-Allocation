@@ -343,7 +343,7 @@ class V2SingleStockWeightingDQNAgentWithDNN:
         # Perform gradient descent step
         self.network.fit(np.array(xs), np.array(ys), batch_size=32, verbose=verbose, shuffle=False)
 
-    def train(self, episodes=1, verbose=0):
+    def train(self, episodes=1, verbose=0, save_figs=False):
         step = 1
         for e in range(episodes):
             print("Episode:", e)
@@ -369,7 +369,7 @@ class V2SingleStockWeightingDQNAgentWithDNN:
             if len(self.replay_memory) >= self.d_min:
                 self._replay(verbose=verbose)
 
-            self.save_plot_of_episode_results(e)
+            if save_figs: self.save_plot_of_episode_results(e)
             
     def save_plot_of_episode_results(self, episode):
         plt.plot(self.env.values, label="Agent")
