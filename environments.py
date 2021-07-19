@@ -84,7 +84,7 @@ class SingleStockWeightControlEnvironment():
         self.reset()
     
     def reset(self):
-        self.stock_index = random.randint(0, len(STOCKS))
+        self.stock_index = random.randint(0, len(STOCKS) - 1)
         self.stock = STOCKS[self.stock_index]
         self.remaining_stocks = STOCKS[:self.stock_index] + STOCKS[self.stock_index + 1:]
         self.year_indices = random.choice(TRAINING_YEARS)
