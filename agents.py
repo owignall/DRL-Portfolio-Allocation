@@ -287,6 +287,10 @@ class V2SingleStockWeightingDQNAgentWithDNN:
         self.target_network = self._build_DNN()
         self.target_network.set_weights(self.network.get_weights())
         self.replay_memory = deque([])
+        # Performance measures
+        self.total_episodes = 0
+        self.return_over_stock = []
+        self.return_over_market = []
         
 
     def _build_DNN(self):
@@ -369,7 +373,12 @@ class V2SingleStockWeightingDQNAgentWithDNN:
             if len(self.replay_memory) >= self.d_min:
                 self._replay(verbose=verbose)
 
+            # Admin
             if save_figs: self.save_plot_of_episode_results(e)
+            self.total_episodes += 1
+            self.return_over_market.append(self.env.values[-1] - self.env.market_values[-1])
+            self.return_over_stock.append(self.env.values[-1] - self.env.stock_values[-1])
+            
             
     def save_plot_of_episode_results(self, episode):
         plt.plot(self.env.values, label="Agent")
@@ -378,7 +387,7 @@ class V2SingleStockWeightingDQNAgentWithDNN:
         year_index = str(int((self.env.year_indices[0] - 59) / 253))
         title = f"{episode}-{self.env.stock.code}-Y{year_index}"
         plt.title(title)
-        plt.xlabel("Episodes")
+        plt.xlabel("Days")
         plt.ylabel("Portfolio Value")
         plt.legend()
         plt.savefig(f"data/figs/{title}")
