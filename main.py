@@ -27,13 +27,11 @@ def refresh_saved_stocks_technical_only():
 
 def get_average_performance(agent, number, episodes, save_fig=True):
     returns_over_market = [[] for _ in range(episodes)]
-    print("ROM", len(returns_over_market))
     returns_over_stock = [[] for _ in range(episodes)]
     for _ in range(number):
         a = agent()
         a.train(episodes=episodes)
         for e in range(episodes):
-            print("e", e)
             returns_over_market[e].append(a.return_over_market[e])
             returns_over_stock[e].append(a.return_over_stock[e])
     average_return_over_market = [sum(vs)/len(vs) for vs in returns_over_market]
