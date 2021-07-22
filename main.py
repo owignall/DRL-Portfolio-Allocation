@@ -52,37 +52,29 @@ def get_average_performance(agent, number, episodes, save_fig=True):
 
 def main():
     # get_average_performance(None, 0, 100)
-    get_average_performance(V2SingleStockWeightingDQNAgentWithDNN, 2, 20)
+    # get_average_performance(V2SingleStockWeightingDQNAgentWithDNN, 2, 20)
 
     # refresh_saved_stocks_technical_only()
-    # stocks = retrieve_stocks_from_folder("data/saved_stocks_technical_only")
+    
+    
+    from stable_baselines3 import A2C, DQN
 
+    # env = gym.make('CartPole-v1')
+    # env = gym.make('MountainCarContinuous-v0')
 
+    env = GymSingleStockWeightControlEnvironment()
+    # model = A2C('MlpPolicy', env, verbose=1)
+    model = DQN('MlpPolicy', env, verbose=1)
+    model.learn(total_timesteps=100000)
 
-    # agent = SingleStockDQNAgentWithDNN()
-    # agent.train()
-
-
-
-
-
-    # p1 = Portfolio(stocks)
-    # agent1 = BenchmarkAgent(p1)
-    # agent1.run_episode()
-    # # print(agent1.values)
-
-    # p2 = Portfolio(stocks)
-    # agent2 = SplitAndHoldAgent(p2)
-    # agent2.run_episode()
-    # # print(agent2.values)
-
-    # # plt.figure(figsize =(12,8))
-    # plt.plot(agent1.values)
-    # plt.plot(agent2.values)
-    # # plt.title(f"{number_of_agents} Sarsa Agents")
-    # # plt.xlabel("Episodes")
-    # # plt.ylabel("Average Undiscounted Return")
-    # plt.show() 
+    obs = env.reset()
+    for i in range(300):
+        action, _state = model.predict(obs, deterministic=True)
+        obs, reward, done, info = env.step(action)
+        # env.render()
+        if done:
+            env.render()
+            obs = env.reset()
 
 if __name__ == "__main__":
     main()

@@ -18,34 +18,6 @@ import numpy as np
 
 from collections import deque 
 
-# class BenchmarkAgent:
-#     def __init__(self, portfolio):
-#         self.portfolio = portfolio
-#         self.values = []
-
-#     def make_action(self):
-#         self.portfolio.buy_all_equally()
-#         value, _ = self.portfolio.action([], [])
-#         self.values.append(value)
-
-#     def run_episode(self):
-#         for i in range(253):
-#             self.make_action()
-
-
-# class SplitAndHoldAgent:
-#     def __init__(self, portfolio):
-#         self.portfolio = portfolio
-#         self.values = []
-
-#     def make_action(self):
-#         value, _ = self.portfolio.action([], [])
-#         self.values.append(value)
-
-#     def run_episode(self):
-#         for i in range(253):
-#             self.make_action()
-
 class SingleStockDQNAgentWithDNN:
     def __init__(self):
         self.action_rep =  {0: "Buy", 1: "Sell", 2: "Hold"}
@@ -274,11 +246,11 @@ class V2SingleStockWeightingDQNAgentWithDNN:
     def __init__(self):
         self.action_rep =  {0: "Buy", 1: "Sell", 2: "Hold"}
         # Parameters
-        self.gamma = 0.8
+        self.gamma = 0.9
         self.epsilon = 0.1
-        self.alpha = 0.005
+        self.alpha = 0.01
         self.c = 100
-        self.d_min = 2000
+        self.d_min = 1000
         self.d_max = 100000
         self.number_of_replays = 1000
         # Other attributes
@@ -295,8 +267,8 @@ class V2SingleStockWeightingDQNAgentWithDNN:
 
     def _build_DNN(self):
         model = Sequential([
-            Dense(units=16, input_shape=(6,), activation='relu'),
-            Dense(units=16, activation='relu'),
+            Dense(units=64, input_shape=(6,), activation='relu'),
+            Dense(units=64, activation='relu'),
             Dense(units=3, activation='linear')
         ])
         model.compile(loss=tf.keras.losses.Huber(), optimizer=Adam(learning_rate=self.alpha))
@@ -345,7 +317,7 @@ class V2SingleStockWeightingDQNAgentWithDNN:
             xs.append(state)
             ys.append(qs)
         # Perform gradient descent step
-        self.network.fit(np.array(xs), np.array(ys), batch_size=128, verbose=verbose, shuffle=False)
+        self.network.fit(np.array(xs), np.array(ys), epochs=10, batch_size=64, verbose=verbose)
 
     def train(self, episodes=1, verbose=0, save_figs=False):
         step = 1
@@ -395,4 +367,4 @@ class V2SingleStockWeightingDQNAgentWithDNN:
 
 if __name__ == "__main__":
     agent = V2SingleStockWeightingDQNAgentWithDNN()
-    agent.train(100, verbose=0)
+    agent.train(1000, verbose=1, save_figs=True)
