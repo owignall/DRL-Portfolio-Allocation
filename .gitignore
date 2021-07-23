@@ -1,3 +1,8 @@
 *.png
 *.pyc
-__pycache__
+__pycache__/*
+
+notebook/datasets/*
+notebook/results/*
+notebook/tensorboard_log/*
+notebook/trained_models/*
