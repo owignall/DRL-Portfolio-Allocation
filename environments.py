@@ -13,8 +13,6 @@ import gym
 from gym import spaces
 import matplotlib
 matplotlib.use("Agg")
-
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from stable_baselines3.common.vec_env import DummyVecEnv
 
@@ -273,18 +271,6 @@ class GymSingleStockWeightControlEnvironment(gym.Env):
         plt.show()
         plt.clf()
 
-import numpy as np
-import pandas as pd
-from gym.utils import seeding
-import gym
-from gym import spaces
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from stable_baselines3.common.vec_env import DummyVecEnv
-
-
 class TIOnlyStockPortfolioEnv(gym.Env):
     """
     A single stock trading environment for OpenAI gym
@@ -523,4 +509,4 @@ class TIOnlyStockPortfolioEnv(gym.Env):
         return e, obs
 
 if __name__ == "__main__":
-    env = GymSingleStockWeightControlEnvironment()
+    pass
