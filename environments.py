@@ -469,7 +469,7 @@ class TIOnlyStockPortfolioEnv(gym.Env):
 
 # Custom environments that comply with FinRL
 
-class V1(gym.Env):
+class V1(gym.Env): # Note this may be different in the notebook 
     def __init__(self, training=True):
         if training:
             self.years = TRAINING_YEARS

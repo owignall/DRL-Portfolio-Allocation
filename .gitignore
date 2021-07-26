@@ -6,3 +6,8 @@ notebook/datasets/*
 notebook/results/*
 notebook/tensorboard_log/*
 notebook/trained_models/*
+
+datasets/*
+results/*
+tensorboard_log/*
+trained_models/*
