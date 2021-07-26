@@ -72,6 +72,33 @@ def get_average_performance(agent, number, episodes, save_fig=True):
     return average_return_over_market, average_return_over_stock
 
 def test_accuracy(environments, date_pairs):
+    def all_agents_trained(environment):
+        agents_dict = dict()
+        # A2C
+        agent = DRLAgent(env = env_train)
+        A2C_PARAMS = {"n_steps": 5, "ent_coef": 0.005, "learning_rate": 0.0002}
+        model_a2c = agent.get_model(model_name="a2c",model_kwargs = A2C_PARAMS)
+        agents_dict['a2c'] = agent.train_model(model=model_a2c, tb_log_name='a2c', total_timesteps=50000)
+        # PPO
+        agent = DRLAgent(env = env_train)
+        PPO_PARAMS = {"n_steps": 2048, "ent_coef": 0.005, "learning_rate": 0.0001, "batch_size": 128}
+        agents_dict['ppo'] = agent.get_model("ppo",model_kwargs = PPO_PARAMS)
+        # DDPG
+        agent = DRLAgent(env = env_train)
+        DDPG_PARAMS = {"batch_size": 128, "buffer_size": 50000, "learning_rate": 0.001}
+        model_ddpg = agent.get_model("ddpg",model_kwargs = DDPG_PARAMS)
+        agents_dict['ddpg'] = agent.train_model(model=model_ddpg, tb_log_name='ddpg', total_timesteps=50000)
+        # SAC
+        agent = DRLAgent(env = env_train)
+        SAC_PARAMS = {"batch_size": 128, "buffer_size": 100000, "learning_rate": 0.0003,  "learning_starts": 100, "ent_coef": "auto_0.1"}
+        model_sac = agent.get_model("sac",model_kwargs = SAC_PARAMS)
+        agents_dict['sac'] = agent.train_model(model=model_sac, tb_log_name='sac', total_timesteps=50000)
+        # TD3
+        agent = DRLAgent(env = env_train)
+        TD3_PARAMS = {"batch_size": 100, "buffer_size": 1000000, "learning_rate": 0.001}
+        agents_dict['td3'] = agent.get_model("td3",model_kwargs = TD3_PARAMS)
+        return agents_dict
+
     if not os.path.exists("./" + config.DATA_SAVE_DIR):
         os.makedirs("./" + config.DATA_SAVE_DIR)
     if not os.path.exists("./" + config.TRAINED_MODEL_DIR):
@@ -132,28 +159,27 @@ def test_accuracy(environments, date_pairs):
             e_train_gym = e(df = train, **env_kwargs)
             env_train, obs = e_train_gym.get_sb_env()
 
-            # CREATE AND TRAIN AGENT
-            agent = DRLAgent(env = env_train)
-            DDPG_PARAMS = {"batch_size": 128, "buffer_size": 5000, "learning_rate": 0.001}
-            model_ddpg = agent.get_model("ddpg",model_kwargs = DDPG_PARAMS)
-            trained_ddpg = agent.train_model(model=model_ddpg, tb_log_name='ddpg', total_timesteps=50000)
+            # CREATE AND TRAIN AGENTS
+            agents_dict = all_agents_trained(env_train)
 
-            # TEST AGENT PERFORMANCE
-            trade = data_split(df, dates[1][0], dates[1][1])
-            e_trade_gym = e(df = trade, **env_kwargs)
-            df_daily_return, df_actions = DRLAgent.DRL_prediction(model=trained_ddpg, environment=e_trade_gym)
-            DRL_strat = convert_daily_return_to_pyfolio_ts(df_daily_return)
-            perf_func = timeseries.perf_stats 
-            perf_stats_all = perf_func(returns=DRL_strat, factor_returns=DRL_strat, positions=None, transactions=None, turnover_denom="AGB")
-            baseline_df = get_baseline(ticker="^DJI", start=dates[1][0], end=dates[1][1])
-            print("==============Get Baseline Stats===========")
-            stats = backtest_stats(baseline_df, value_col_name = 'close')
-            print("==============DRL Strategy Stats===========")
-            print(perf_stats_all)
+            for a in agents_dict:
 
-            # CREATE A RECORD
-            with open(f"Env-{e_count}_dates-{d_count}.txt", "w") as file:
-                file.write(f"{str(dates)}\n===Baseline Stats===\n{stats}\n===DRL State===\n{perf_stats_all}")
+                # TEST AGENT PERFORMANCE
+                trade = data_split(df, dates[1][0], dates[1][1])
+                e_trade_gym = e(df = trade, **env_kwargs)
+                df_daily_return, df_actions = DRLAgent.DRL_prediction(model=agents_dict[a], environment=e_trade_gym)
+                DRL_strat = convert_daily_return_to_pyfolio_ts(df_daily_return)
+                perf_func = timeseries.perf_stats 
+                perf_stats_all = perf_func(returns=DRL_strat, factor_returns=DRL_strat, positions=None, transactions=None, turnover_denom="AGB")
+                baseline_df = get_baseline(ticker="^DJI", start=dates[1][0], end=dates[1][1])
+                print("==============Get Baseline Stats===========")
+                stats = backtest_stats(baseline_df, value_col_name = 'close')
+                print("==============DRL Strategy Stats===========")
+                print(perf_stats_all)
+
+                # CREATE A RECORD
+                with open(f"Agent-{a}_Env-{e_count}_dates-{d_count}.txt", "w") as file:
+                    file.write(f"{e}\n{e.__class__.__name__}\n{str(dates)}\n===Baseline Stats===\n{stats}\n===DRL State===\n{perf_stats_all}")
 
 
 
