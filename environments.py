@@ -271,52 +271,11 @@ class GymSingleStockWeightControlEnvironment(gym.Env):
         plt.show()
         plt.clf()
 
+# Adapted versions of provided environments
+
 class TIOnlyStockPortfolioEnv(gym.Env):
     """
     A single stock trading environment for OpenAI gym
-
-    Attributes
-    ----------
-        df: DataFrame
-            input data
-        stock_dim : int
-            number of unique stocks
-        hmax : int
-            maximum number of shares to trade
-        initial_amount : int
-            start money
-        transaction_cost_pct: float
-            transaction cost percentage per trade
-        reward_scaling: float
-            scaling factor for reward, good for training
-        state_space: int
-            the dimension of input features
-        action_space: int
-            equals stock dimension
-        tech_indicator_list: list
-            a list of technical indicator names
-        turbulence_threshold: int
-            a threshold to control risk aversion
-        day: int
-            an increment number to control date
-
-    Methods
-    -------
-    _sell_stock()
-        perform sell action based on the sign of the action
-    _buy_stock()
-        perform buy action based on the sign of the action
-    step()
-        at each step the agent will return actions, then
-        we will calculate the reward, and return the next observation.
-    reset()
-        reset the environment
-    render()
-        use render to return other functions
-    save_asset_memory()
-        return account value at each time step
-    save_action_memory()
-        return actions/positions at each time step
     """
 
     metadata = {"render.modes": ["human"]}
@@ -508,5 +467,104 @@ class TIOnlyStockPortfolioEnv(gym.Env):
         obs = e.reset()
         return e, obs
 
+# Custom environments that comply with FinRL
+
+class V1(gym.Env):
+    def __init__(self, training=True):
+        if training:
+            self.years = TRAINING_YEARS
+        else:
+            self.years = TESTING_YEARS
+        self.start_index = self.years[0][0]
+        self.end_index = self.years[-1][-1]
+
+        self.stocks = STOCKS[0:30]
+        self.state_attributes = ["macd", "signal_line", "normalized_rsi", "std_devs_out", "relative_vol"]
+
+        self.action_space = spaces.Box(low=0, high=1, shape=(len(self.stocks),))
+        self.observation_space = spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(len(self.state_attributes), len(self.stocks)),
+        )
+
+    
+    def step(self, actions):
+        weights = self.softmax_normalization(actions)
+        previous_index = self.date_index
+
+        self.date_index += 1
+
+        previous_closes = np.array([stock.data[previous_index].close for stock in self.stocks])
+        new_closes = np.array([stock.data[self.date_index].close for stock in self.stocks])
+        portfolio_return = sum(((new_closes / previous_closes) - 1) * weights)
+        self.portfolio_value *= 1 + portfolio_return
+
+        self.return_memory.append(portfolio_return)
+        self.value_memory.append(self.portfolio_value)
+        self.date_memory.append(self.stocks[0].data[self.date_index].date)
+        self.actions_memory.append(actions)
+
+        self.state = self.get_state()
+        self.reward = self.portfolio_value
+        if self.date_index > self.end_index: self.terminal = True
+
+        return self.state, self.reward, self.terminal, {}
+
+    def reset(self):
+        self.date_index = self.start_index
+        self.portfolio_value = 1_000_000
+
+        self.state = self.get_state()
+        self.terminal = False
+        self.return_memory = [0]
+        self.value_memory = [self.portfolio_value]
+        self.date_memory = [self.stocks[0].data[self.date_index].date]
+        self.actions_memory = [np.array([1 for _ in range(len(self.stocks))])]
+
+        return self.state
+    
+    def get_state(self):
+        return np.array([[getattr(stock.data[self.date_index], a) for stock in self.stocks] for a in self.state_attributes])
+
+    def softmax_normalization(self, actions):
+        """Taken from other environment"""
+        numerator = np.exp(actions)
+        denominator = np.sum(np.exp(actions))
+        softmax_output = numerator / denominator
+        return softmax_output
+    
+    def save_asset_memory(self):
+        date_list = self.date_memory
+        portfolio_return = self.return_memory
+        df_account_value = pd.DataFrame(
+            {"date": date_list, "daily_return": portfolio_return}
+        )
+        return df_account_value
+
+    def save_action_memory(self):
+        # date and close price length must match actions length
+        date_list = self.date_memory
+        df_date = pd.DataFrame(date_list)
+        df_date.columns = ["date"]
+
+        action_list = self.actions_memory
+        df_actions = pd.DataFrame(action_list)
+        df_actions.columns = [s.code for s in self.stocks]# self.data.tic.values
+        df_actions.index = df_date.date
+        # df_actions = pd.DataFrame({'date':date_list,'actions':action_list})
+        return df_actions
+
+    def get_sb_env(self):
+        e = DummyVecEnv([lambda: self])
+        obs = e.reset()
+        return e, obs
+
+
+
+
 if __name__ == "__main__":
-    pass
+    env = V1()
+    env.reset()
+    env.step(np.array([random.random() for _ in range(30)]))
+    env.get_sb_env()
