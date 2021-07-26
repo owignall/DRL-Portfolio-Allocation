@@ -116,7 +116,7 @@ def test_accuracy(environments, date_pairs):
         for dates in date_pairs:
             d_count += 1
             # CREATE ENVIRONMENT    
-            train = data_split(df, dates[0][0],dates[0][1])
+            train = data_split(df, dates[0][0], dates[0][1])
             stock_dimension = len(train.tic.unique())
             state_space = stock_dimension
             env_kwargs = {
@@ -139,13 +139,13 @@ def test_accuracy(environments, date_pairs):
             trained_ddpg = agent.train_model(model=model_ddpg, tb_log_name='ddpg', total_timesteps=50000)
 
             # TEST AGENT PERFORMANCE
-            trade = data_split(df,'2020-07-01', '2021-07-01')
+            trade = data_split(df, dates[1][0], dates[1][1])
             e_trade_gym = e(df = trade, **env_kwargs)
             df_daily_return, df_actions = DRLAgent.DRL_prediction(model=trained_ddpg, environment=e_trade_gym)
             DRL_strat = convert_daily_return_to_pyfolio_ts(df_daily_return)
             perf_func = timeseries.perf_stats 
             perf_stats_all = perf_func(returns=DRL_strat, factor_returns=DRL_strat, positions=None, transactions=None, turnover_denom="AGB")
-            baseline_df = get_baseline(ticker="^DJI", start = df_daily_return.loc[0,'date'], end = df_daily_return.loc[len(df_daily_return)-1,'date'])
+            baseline_df = get_baseline(ticker="^DJI", start=dates[1][0], end=dates[1][1])
             print("==============Get Baseline Stats===========")
             stats = backtest_stats(baseline_df, value_col_name = 'close')
             print("==============DRL Strategy Stats===========")
