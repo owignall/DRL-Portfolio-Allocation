@@ -498,7 +498,7 @@ class V1(gym.Env):
         previous_closes = np.array([stock.data[previous_index].close for stock in self.stocks])
         new_closes = np.array([stock.data[self.date_index].close for stock in self.stocks])
         portfolio_return = sum(((new_closes / previous_closes) - 1) * weights)
-        self.portfolio_value *= 1 + portfolio_return
+        self.portfolio_value *= (1 + portfolio_return)
 
         self.return_memory.append(portfolio_return)
         self.value_memory.append(self.portfolio_value)
@@ -564,7 +564,11 @@ class V1(gym.Env):
 
 
 if __name__ == "__main__":
-    env = V1()
-    env.reset()
-    env.step(np.array([random.random() for _ in range(30)]))
-    env.get_sb_env()
+    mark_env = V1(training=False)
+    obs = mark_env.reset()
+    while True:
+        action = [1 for _ in range(len(mark_env.stocks))]
+        obs, reward, done, info = mark_env.step(action)
+        if done:
+            break
+    print("Market", mark_env.portfolio_value)
