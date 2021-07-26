@@ -10,6 +10,7 @@ Plan for this file.
 from environments import *
 from storage import *
 
+import os
 import pandas as pd
 import numpy as np
 import matplotlib
@@ -71,6 +72,14 @@ def get_average_performance(agent, number, episodes, save_fig=True):
     return average_return_over_market, average_return_over_stock
 
 def test_accuracy(environments, date_pairs):
+    if not os.path.exists("./" + config.DATA_SAVE_DIR):
+        os.makedirs("./" + config.DATA_SAVE_DIR)
+    if not os.path.exists("./" + config.TRAINED_MODEL_DIR):
+        os.makedirs("./" + config.TRAINED_MODEL_DIR)
+    if not os.path.exists("./" + config.TENSORBOARD_LOG_DIR):
+        os.makedirs("./" + config.TENSORBOARD_LOG_DIR)
+    if not os.path.exists("./" + config.RESULTS_DIR):
+        os.makedirs("./" + config.RESULTS_DIR)
     # GETTING DATAFRAME
     df = YahooDownloader(start_date = '2008-01-01',
                         end_date = '2021-07-01',
@@ -127,7 +136,7 @@ def test_accuracy(environments, date_pairs):
             agent = DRLAgent(env = env_train)
             DDPG_PARAMS = {"batch_size": 128, "buffer_size": 5000, "learning_rate": 0.001}
             model_ddpg = agent.get_model("ddpg",model_kwargs = DDPG_PARAMS)
-            trained_ddpg = agent.train_model(model=model_ddpg, tb_log_name='ddpg', total_timesteps=50)
+            trained_ddpg = agent.train_model(model=model_ddpg, tb_log_name='ddpg', total_timesteps=50000)
 
             # TEST AGENT PERFORMANCE
             trade = data_split(df,'2020-07-01', '2021-07-01')
