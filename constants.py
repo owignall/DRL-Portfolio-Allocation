@@ -1,0 +1,38 @@
+
+RANKING_VALUES = {
+    "Mixed": 0,
+    "Reduce": -1,
+    "Hold Neutral": 0,
+    "Long-Term Buy": 1,
+    "Equal-Weight": 0,
+    "Buy": 1,
+    "Strong Buy": 1,
+    "Hold": 0,
+    "In-Line": 0,
+    "Perform": 0,
+    "Negative": -1,
+    "Positive": 1,
+    "Overweight": 1,
+    "Sector Outperform": 1,
+    "Top Pick": 1,
+    "Accumulate": 1,
+    "Market Perform": 0,
+    "Market Outperform": 1,
+    "Sector Perform": 0,
+    "In-line": 0,
+    "Equal-weight": 0,
+    "Neutral": 0,
+    "Average": 0,
+    "Peer Perform": 1,
+    "Underperform": -1,
+    "Market Underperform": -1,
+    "Sector Weight": 0,
+    "Sector Underperform": -1,
+    "Market Weight": 0,
+    "Long-term Buy": 1,
+    "Underweight": -1,
+    "Sell": -1,
+    "Outperform": 1
+}
+
+GS_DECAY = 0.98

@@ -9,6 +9,7 @@ Plan for this file.
 # from agents import *
 from environments import *
 from storage import *
+from constants import *
 
 import os
 import pandas as pd
@@ -130,10 +131,51 @@ def test_accuracy(environments, date_pairs):
         return_list.append(return_lookback)
         covs = return_lookback.cov().values 
         cov_list.append(covs)
-
     df_cov = pd.DataFrame({'date':df.date.unique()[lookback:],'cov_list':cov_list,'return_list':return_list})
     df = df.merge(df_cov, on='date')
     df = df.sort_values(['date','tic']).reset_index(drop=True)
+    # add grade scores to the dataframe
+    # Get a list of dates
+    dates = df.loc[:,"date"].unique()
+    dates.sort()
+    # Create a new DataFrame for sentiment
+    grade_score_df = pd.DataFrame({"date":[], "tic": [], "grade_score":[]})
+    # For each stock add row for each date
+    for code in config.DOW_30_TICKER:
+        print(code)
+        HEADER = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.0 Safari/537.36'}
+        url = f"https://uk.finance.yahoo.com/quote/{code}/analysis"
+        page = requests.get(url, headers=HEADER)
+        soup = BeautifulSoup(page.content,'html.parser')
+        script = soup.find('script', text=re.compile(r'root\.App\.main'))
+        json_text = re.search(r'^\s*root\.App\.main\s*=\s*({.*?})\s*;\s*$', script.string, flags=re.MULTILINE).group(1)
+        data = json.loads(json_text)
+        rankings_scraped = data['context']['dispatcher']['stores']['QuoteSummaryStore']['upgradeDowngradeHistory']['history']
+        # Create dictionary ranking values
+        rankings_dict = dict()
+        for r in rankings_scraped:
+            investment_ranking = (r['firm'], r['action'], r['fromGrade'], r['toGrade'])
+            # if r['toGrade'] in ["Perform"]:
+            #   print(investment_ranking)
+            if r['toGrade'] in RANKING_VALUES:
+                value = RANKING_VALUES[r['toGrade']]
+                date = datetime.datetime.fromtimestamp(r['epochGradeDate']).strftime('%Y-%m-%d')
+                if date in rankings_dict:
+                    rankings_dict[date].append(value)
+                else:
+                    rankings_dict[date] = [value]
+        # Add sentiment to dataframe
+        previous_score = 0
+        for index, date in enumerate(dates):
+            if date in rankings_dict:
+                values = rankings_dict[date]
+                score = sum(values) / len(values)
+            else:
+                score = GS_DECAY * previous_score
+            grade_score_df = grade_score_df.append({'date': date, 'tic': code ,'grade_score':score}, ignore_index=True)
+            previous_score = score
+    # Merge new DataFrame with df
+    df =df.merge(grade_score_df, on=['date', 'tic'])
 
     # TESTING
     e_count = 0
@@ -163,7 +205,6 @@ def test_accuracy(environments, date_pairs):
             agents_dict = all_agents_trained(env_train)
 
             for a in agents_dict:
-
                 # TEST AGENT PERFORMANCE
                 trade = data_split(df, dates[1][0], dates[1][1])
                 e_trade_gym = e(df = trade, **env_kwargs)
@@ -186,12 +227,13 @@ def test_accuracy(environments, date_pairs):
 def main():
     # training_dates = ('2014-01-01','2020-07-01')
     # testing_dates = ('2020-07-01', '2021-07-01')
+    all_envs = [StockPortfolioEnv, TIOnlyStockPortfolioEnv, GSAndTIStockPortfolioEnv]
     date_pairs = [(('2014-01-01','2020-07-01'), ('2020-07-01', '2021-07-01')), 
                     ((('2013-01-01','2019-07-01'), ('2019-07-01', '2020-07-01'))),
                     ((('2012-01-01','2018-07-01'), ('2018-07-01', '2019-07-01'))),
                     ((('2011-01-01','2017-07-01'), ('2017-07-01', '2018-07-01'))),
                     ((('2010-01-01','2016-07-01'), ('2016-07-01', '2017-07-01')))]
-    test_accuracy([StockPortfolioEnv, TIOnlyStockPortfolioEnv], date_pairs)
+    test_accuracy([GSAndTIStockPortfolioEnv], date_pairs)
 
     # df = pd.read_csv("data/df.csv.zip", compression="zip")
 
