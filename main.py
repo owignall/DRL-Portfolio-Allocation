@@ -234,7 +234,7 @@ def main():
                     ((('2012-01-01','2018-07-01'), ('2018-07-01', '2019-07-01'))),
                     ((('2011-01-01','2017-07-01'), ('2017-07-01', '2018-07-01'))),
                     ((('2010-01-01','2016-07-01'), ('2016-07-01', '2017-07-01')))]
-    test_accuracy([GSAndTIStockPortfolioEnv], date_pairs)
+    test_accuracy([GSAndTIStockPortfolioEnv], date_pairs[1:])
 
     # df = pd.read_csv("data/df.csv.zip", compression="zip")
 
