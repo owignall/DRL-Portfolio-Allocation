@@ -485,6 +485,7 @@ class GSAndTIStockPortfolioEnv(gym.Env):
         state_space,
         action_space,
         tech_indicator_list,
+        all_state_indicators,
         turbulence_threshold=None,
         lookback=252,
         day=0,
@@ -502,8 +503,7 @@ class GSAndTIStockPortfolioEnv(gym.Env):
         self.state_space = state_space
         self.action_space = action_space
         self.tech_indicator_list = tech_indicator_list
-        self.all_state_indicators = tech_indicator_list
-        self.all_state_indicators.append('grade_score')
+        self.all_state_indicators = all_state_indicators
 
         # action_space normalization and shape is self.stock_dim
         self.action_space = spaces.Box(low=0, high=1, shape=(self.action_space,))
@@ -612,6 +612,7 @@ class GSAndTIStockPortfolioEnv(gym.Env):
         self.data = self.df.loc[self.day, :]
         # load states
         # self.covs = self.data["cov_list"].values[0]
+        
         self.state = np.array([self.data[tech].values.tolist() for tech in self.all_state_indicators])
         self.portfolio_value = self.initial_amount
         # self.cost = 0

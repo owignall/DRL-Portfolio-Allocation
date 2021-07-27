@@ -194,7 +194,8 @@ def test_accuracy(environments, date_pairs):
                 "transaction_cost_pct": 0.001, 
                 "state_space": state_space, 
                 "stock_dim": stock_dimension, 
-                "tech_indicator_list": config.TECHNICAL_INDICATORS_LIST, 
+                "tech_indicator_list": config.TECHNICAL_INDICATORS_LIST,
+                "all_state_indicators": config.TECHNICAL_INDICATORS_LIST + ['grade_score'],
                 "action_space": stock_dimension, 
                 "reward_scaling": 1e-4    
             }
