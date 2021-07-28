@@ -203,7 +203,13 @@ def test_accuracy(environments, date_pairs):
             env_train, obs = e_train_gym.get_sb_env()
 
             # CREATE AND TRAIN AGENTS
-            agents_dict = all_agents_trained(env_train)
+            # agents_dict = all_agents_trained(env_train)
+            # A2C
+            agents_dict = dict()
+            agent = DRLAgent(env = env_train)
+            A2C_PARAMS = {"n_steps": 5, "ent_coef": 0.005, "learning_rate": 0.0002}
+            model_a2c = agent.get_model(model_name="a2c",model_kwargs = A2C_PARAMS)
+            agents_dict['a2c'] = agent.train_model(model=model_a2c, tb_log_name='a2c', total_timesteps=500000)
 
             for a in agents_dict:
                 # TEST AGENT PERFORMANCE
@@ -234,7 +240,7 @@ def main():
                     ((('2012-01-01','2018-07-01'), ('2018-07-01', '2019-07-01'))),
                     ((('2011-01-01','2017-07-01'), ('2017-07-01', '2018-07-01'))),
                     ((('2010-01-01','2016-07-01'), ('2016-07-01', '2017-07-01')))]
-    test_accuracy([GSAndTIStockPortfolioEnv], date_pairs[1:])
+    test_accuracy([StockPortfolioEnv], date_pairs[0:1])
 
     # df = pd.read_csv("data/df.csv.zip", compression="zip")
 
