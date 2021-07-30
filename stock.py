@@ -7,9 +7,13 @@ COULD DO
     - Consider other article content extraction
 """
 
+from constants import *
+
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+import numpy as np
+import pandas as pd
 import time
 import threading
 import re
@@ -105,7 +109,25 @@ class Stock:
         self.ic_name = a_ic_name
         self.data_start = int(time.time() - 8 * E_YEAR)
         self.data_end = int(time.time())
+        self.rs_decay = 0.9
         self.data = []
+        self.df = self.initialize_df()
+    
+    def initialize_df(self):
+        """Extract price data and use this to create a new dataframe for the stock"""
+        price_data_points = []
+        period1 = str(self.data_start)
+        period2 = str(self.data_end)
+        interval = "1d"
+        file_link = f"https://query1.finance.yahoo.com/v7/finance/download/{self.code}?period1={period1}&period2={period2}&interval={interval}"
+        request = requests.get(file_link, headers=HEADER)
+        content = str(request.content).replace("'", "").split("\\n")
+        for i in range(1, len(content)):
+            new_point = content[i].split(",")
+            price_data_points.append(new_point)
+        if len(price_data_points) == 0:
+            raise Exception("No data was retrieved by the extraction function")
+        return pd.DataFrame(data=price_data_points, columns=['date', 'open', 'high', 'low', 'close', 'adj_close', 'volume'])
     
     def __str__(self):
         rep = f"{self.name} ({self.code}) - {len(self.data)} Data points"
@@ -122,6 +144,7 @@ class Stock:
                 print(f"{d.date}\t{a.title}")
     
     def extract_price_data(self):
+        """ DEPRICATED ... soon """
         period1 = str(self.data_start)
         period2 = str(self.data_end)
         interval = "1d"
@@ -149,7 +172,7 @@ class Stock:
         financials = data['context']['dispatcher']['stores']['QuoteSummaryStore']
         """
 
-    def extract_news_data(self, threads=5, extract_content=True):     
+    def extract_inv_news_data(self, threads=5, extract_content=True):     
         def _convert_date(news_date):
             # Converts format of date e.g. Apr 14, 2021 -> 2021-04-14
             if "ago" in news_date:
@@ -253,6 +276,8 @@ class Stock:
         json_text = re.search(r'^\s*root\.App\.main\s*=\s*({.*?})\s*;\s*$', script.string, flags=re.MULTILINE).group(1)
         data = json.loads(json_text)
         rankings_scraped = data['context']['dispatcher']['stores']['QuoteSummaryStore']['upgradeDowngradeHistory']['history']
+        
+        # OLD APPROACH
         # Create dictionary of InvestmentRanking object
         rankings_dict = dict()
         for r in rankings_scraped:
@@ -266,6 +291,35 @@ class Stock:
         for i in range(len(self.data)):
             if self.data[i].date in rankings_dict:
                 self.data[i].investment_rankings = rankings_dict[self.data[i].date]
+        
+        # DF APPROACH
+        rankings_dict = dict()
+        for r in rankings_scraped:
+            investment_ranking = {'action':r['action'], 'from':r['fromGrade'], 'to': r['toGrade']}
+            date = datetime.fromtimestamp(r['epochGradeDate']).strftime('%Y-%m-%d')
+            if date in rankings_dict:
+                rankings_dict[date].append(investment_ranking)
+            else:
+                rankings_dict[date] = [investment_ranking]
+        # Rankings by date list
+        rankings_by_date_list = []
+        ranking_scores = []
+        previous_score = 0
+        for i in range(len(self.df)):
+            if self.df.iloc[i]['date'] in rankings_dict:
+                rankings = rankings_dict[self.df.iloc[i]['date']]
+                values = [RANKING_VALUES[r['to']] if r['to'] in RANKING_VALUES else 0 for r in rankings]
+                score = (self.rs_decay * previous_score) + sum(values)
+                # print(score, values)
+            else:
+                rankings = []
+                score = self.rs_decay * previous_score
+                # print(score)
+            previous_score = score
+            rankings_by_date_list.append(rankings)
+            ranking_scores.append(score)    
+        self.df['rankings'] = rankings_by_date_list
+        self.df['ranking_score'] = ranking_scores
 
     def extract_all_data(self, verbose=False):
         if verbose: print("Extracting price data")
@@ -274,7 +328,7 @@ class Stock:
         if verbose: print("Extracting investment ranking data")
         self.extract_investment_ranking_data()
         if verbose: print("Extracting news data")
-        self.extract_news_data()
+        self.extract_inv_news_data()
 
     def calculate_technical_indicators(self):
         """Iterates through daily data calculating technical indicators."""
@@ -334,3 +388,10 @@ class Stock:
     
     def get_yahoo_link(self):
         return f"https://uk.finance.yahoo.com/quote/{self.code}"
+
+
+if __name__ == "__main__":
+    s = Stock(None, "AAPL", None)
+    s.extract_investment_ranking_data()
+    # print(s.df)
+    # print(s.df.loc[:,'rankings'].to_string())
