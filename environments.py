@@ -489,7 +489,7 @@ class GSAndTIStockPortfolioEnv(gym.Env):
         turbulence_threshold=None,
         lookback=252,
         day=0,
-    ):
+        ):
         # super(StockEnv, self).__init__()
         # money = 10 , scope = 1
         self.day = day
