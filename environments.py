@@ -21,7 +21,7 @@ YEAR_RANGES = [(59 + (year_index*ANNUAL_TRADING_DAYS), 59 + ((year_index+1)*ANNU
 TRAINING_YEARS = YEAR_RANGES[:5]
 TESTING_YEARS = YEAR_RANGES[5:]
 
-STOCKS = retrieve_stocks_from_folder("data/saved_stocks_technical_only")
+STOCKS = retrieve_stocks_from_folder("data/old_saved_stocks_technical_only")
 
 class SingleStockEnvironment():
     def __init__(self):
@@ -757,15 +757,133 @@ class V1(gym.Env): # Note this may be different in the notebook
         obs = e.reset()
         return e, obs
 
+# New stock class environment
+class PortfolioAllocationEnvironment(gym.Env):
+    
+    def __init__(self, stocks, state_attributes):
+        self.stocks = stocks
+        self.state_attributes = state_attributes
+        self.final_index = len(stocks[0].df) - 1
+
+        self.action_space = spaces.Box(low=0, high=1, shape=(len(self.stocks),))
+        self.observation_space = spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(len(self.state_attributes), len(self.stocks)),
+        )
+    
+    def reset(self):
+        self.date_index = 0
+
+        self.portfolio_value = 1_000_000
+
+        self.state = self.get_state()
+        self.terminal = False
+        self.return_memory = [0]
+        self.value_memory = [self.portfolio_value]
+        self.date_memory = [self.stocks[0].df.loc[self.date_index, 'date']]
+        self.actions_memory = [np.array([1 for _ in range(len(self.stocks))])]
+        return self.state
+
+    def step(self, action):
+        if self.terminal: 
+            raise Exception("Environment in already in terminal state")
+        
+        weights = self.softmax_normalization(action)
+        # print(sum(weights))
+        previous_index = self.date_index
+        self.date_index += 1
+
+        previous_closes = np.array([s.df.loc[previous_index, 'close'] for s in self.stocks])
+        new_closes = np.array([s.df.loc[self.date_index, 'close'] for s in self.stocks])
+        portfolio_return = sum(((new_closes / previous_closes) - 1) * weights)
+
+        change_in_value = self.portfolio_value * portfolio_return
+
+        self.portfolio_value *= (1 + portfolio_return)
+
+        # Memory management
+        self.return_memory.append(portfolio_return)
+        self.value_memory.append(self.portfolio_value)
+        self.date_memory.append(self.stocks[0].df.loc[self.date_index, 'date'])
+        self.actions_memory.append(action)
+
+        self.state = self.get_state()
+        # self.reward = self.portfolio_value
+        self.reward = change_in_value
+        if self.date_index >= self.final_index: self.terminal = True
+
+        return self.state, self.reward, self.terminal, {}
+
+    def get_state(self):
+        return np.array([[s.df.loc[self.date_index, a] for s in self.stocks] for a in self.state_attributes])
+    
+    @staticmethod
+    def softmax_normalization(actions):
+        """Taken from other environment"""
+        numerator = np.exp(actions)
+        denominator = np.sum(np.exp(actions))
+        softmax_output = numerator / denominator
+        return softmax_output
+
+
 
 
 
 if __name__ == "__main__":
-    mark_env = V1(training=False)
-    obs = mark_env.reset()
+    
+    stocks = retrieve_stocks_from_folder("data\snp_stocks_basic")
+    # for s in stocks:
+    #     s.save_as_excel()
+    env = PortfolioAllocationEnvironment(stocks[80:90], ['ranking_score', 'relative_vol'])
+
+    obs = env.reset()
     while True:
-        action = [1 for _ in range(len(mark_env.stocks))]
-        obs, reward, done, info = mark_env.step(action)
+        action = [1 for _ in range(len(env.stocks))]
+        obs, reward, done, info = env.step(action)
         if done:
             break
-    print("Market", mark_env.portfolio_value)
+    print("Even Actions", env.portfolio_value)
+    plt.plot(env.value_memory, label="Even Actions")
+
+    obs = env.reset()
+    while True:
+        action = [random.random() for _ in range(len(env.stocks))]
+        obs, reward, done, info = env.step(action)
+        if done:
+            break
+    print("Random Actions", env.portfolio_value)
+    plt.plot(env.value_memory, label="Random Actions")
+
+    # print(sum(PortfolioAllocationEnvironment.softmax_normalization([0 for _ in range(100)])))
+    
+    
+    sigmoid_v = np.vectorize(lambda x: 1 / (1 + math.exp(-x)))
+    obs = env.reset()
+    while True:
+        action = sigmoid_v(obs[0])
+        obs, reward, done, info = env.step(action)
+        if done:
+            break
+    print("Score Actions", env.portfolio_value)
+    plt.plot(env.value_memory, label="Score Actions")
+
+
+    title = f"Comparison {len(env.stocks)}"
+    plt.title(title)
+    plt.xlabel("Steps")
+    plt.ylabel("Return")
+    plt.legend()
+    plt.savefig(f"{title}")
+    plt.clf()
+    
+
+
+    # mark_env = V1(training=False)
+    # obs = mark_env.reset()
+    # while True:
+    #     action = [1 for _ in range(len(mark_env.stocks))]
+    #     obs, reward, done, info = mark_env.step(action)
+    #     if done:
+    #         break
+    # print("Market", mark_env.portfolio_value)

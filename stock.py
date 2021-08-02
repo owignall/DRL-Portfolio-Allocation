@@ -341,6 +341,8 @@ class OldStock:
         self.extract_price_data()
         self.calculate_technical_indicators()
 
+# NEW APPROACH
+
 class Stock:
     def __init__(self, name, code, ic_name):
         self.name = name
@@ -619,15 +621,9 @@ if __name__ == "__main__":
     # s.extract_news_data()
     # print(s.loc[:,'inv_articles'])
     # for a in s.df['inv_articles']:
-    #     print(a)
-
-    print(s)
     
-    # s.extract_investment_ranking_data()
-    # print(type(s.df.describe()))
-    # s.save_df_as_excel_workbook()
-    # print(s.df)
-    # print(s.df.loc[:,'rankings'].to_string())
+
+    
 
 
 

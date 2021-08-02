@@ -45,7 +45,7 @@ def refresh_saved_stocks_technical_only():
     for i in range(len(stock_arguments)):
         s = Stock(*stock_arguments[i])
         s.extract_and_calculate_technical()
-        save_stock(s, "data/saved_stocks_technical_only")
+        save_stock(s, "data/old_saved_stocks_technical_only")
         print(s)
 
 def get_average_performance(agent, number, episodes, save_fig=True):
@@ -232,18 +232,22 @@ def test_accuracy(environments, date_pairs):
 
 
 def main():
-    # training_dates = ('2014-01-01','2020-07-01')
-    # testing_dates = ('2020-07-01', '2021-07-01')
-    all_envs = [StockPortfolioEnv, TIOnlyStockPortfolioEnv, GSAndTIStockPortfolioEnv]
-    date_pairs = [(('2014-01-01','2020-07-01'), ('2020-07-01', '2021-07-01')), 
-                    ((('2013-01-01','2019-07-01'), ('2019-07-01', '2020-07-01'))),
-                    ((('2012-01-01','2018-07-01'), ('2018-07-01', '2019-07-01'))),
-                    ((('2011-01-01','2017-07-01'), ('2017-07-01', '2018-07-01'))),
-                    ((('2010-01-01','2016-07-01'), ('2016-07-01', '2017-07-01')))]
-    test_accuracy([StockPortfolioEnv], date_pairs[0:1])
+    # all_envs = [StockPortfolioEnv, TIOnlyStockPortfolioEnv, GSAndTIStockPortfolioEnv]
+    # date_pairs = [(('2014-01-01','2020-07-01'), ('2020-07-01', '2021-07-01')), 
+    #                 ((('2013-01-01','2019-07-01'), ('2019-07-01', '2020-07-01'))),
+    #                 ((('2012-01-01','2018-07-01'), ('2018-07-01', '2019-07-01'))),
+    #                 ((('2011-01-01','2017-07-01'), ('2017-07-01', '2018-07-01'))),
+    #                 ((('2010-01-01','2016-07-01'), ('2016-07-01', '2017-07-01')))]
+    # test_accuracy([StockPortfolioEnv], date_pairs[0:1])
 
     # df = pd.read_csv("data/df.csv.zip", compression="zip")
 
+
+    stock_arguments = get_snp500_stock_arguments()
+    for i in range(len(stock_arguments)):
+        s = Stock(*stock_arguments[i])
+        s.extract_and_calculate_basic()
+        save_stock(s, "data/snp_stocks_basic")
     # # Create Environment
 
     # train = data_split(df, '2009-01-01','2020-07-01')
