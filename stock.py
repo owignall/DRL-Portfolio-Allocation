@@ -372,20 +372,20 @@ class Stock:
                     return d(value)
                 except ValueError:
                     pass
-        price_data_points = []
+        data_points = []
         period1 = str(self.data_start)
         period2 = str(self.data_end)
         interval = "1d"
         file_link = f"https://query1.finance.yahoo.com/v7/finance/download/{self.code}?period1={period1}&period2={period2}&interval={interval}"
         request = requests.get(file_link, headers=HEADER)
         content = str(request.content).replace("'", "").split("\\n")
-        cols = content[0].split(",")
+        # cols = content[0].split(",")
         for i in range(1, len(content)):
-            new_point = map(_convert_type, content[i].split(","))
-            price_data_points.append(new_point)
-        if len(price_data_points) == 0:
+            new_point = map(_convert_type, [self.code] + content[i].split(","))
+            data_points.append(new_point)
+        if len(data_points) == 0:
             raise Exception("No data was retrieved by the extraction function")
-        return pd.DataFrame(data=price_data_points, columns=['date', 'open', 'high', 'low', 'close', 'adj_close', 'volume'])
+        return pd.DataFrame(data=data_points, columns=['tic', 'date', 'open', 'high', 'low', 'close', 'adj_close', 'volume'])
 
     def extract_financial_data(self):
         # MIGHT NOT BE ABLE TO FIND ENOUGH DATA FOR THIS
@@ -618,6 +618,7 @@ if __name__ == "__main__":
     s = Stock("Apple", "AAPL", "apple-computer-inc")
     # s.extract_price_data()
     s.calculate_technical_indicators()
+    print(s.df)
     # s.extract_news_data()
     # print(s.loc[:,'inv_articles'])
     # for a in s.df['inv_articles']:
