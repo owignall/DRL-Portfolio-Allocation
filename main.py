@@ -244,10 +244,18 @@ def main():
 
 
     stock_arguments = get_snp500_stock_arguments()
-    for i in range(len(stock_arguments)):
-        s = Stock(*stock_arguments[i])
-        s.extract_and_calculate_basic()
-        save_stock(s, "data/snp_stocks_basic")
+    # print(stock_arguments)
+    for a in stock_arguments:
+        print(str(a) + ",")
+
+    # for i in range(len(stock_arguments)):
+    #     s = Stock(*stock_arguments[i])
+    #     s.extract_and_calculate_basic()
+    #     save_stock(s, "data/snp_stocks_basic")
+
+
+
+
     # # Create Environment
 
     # train = data_split(df, '2009-01-01','2020-07-01')

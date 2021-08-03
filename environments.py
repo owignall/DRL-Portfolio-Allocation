@@ -760,7 +760,7 @@ class V1(gym.Env): # Note this may be different in the notebook
 # New stock class environment
 class PortfolioAllocationEnvironment(gym.Env):
     
-    def __init__(self, stocks, state_attributes):
+    def __init__(self, stocks: list[pd.DataFrame], state_attributes: list[str]):
         self.check_arguments_valid(stocks, state_attributes)
         self.stocks = stocks
         self.state_attributes = state_attributes
@@ -842,7 +842,7 @@ if __name__ == "__main__":
     stocks = retrieve_stocks_from_folder("data\snp_stocks_basic")
     # for s in stocks:
     #     s.save_as_excel()
-    dfs = [s.df.iloc[:300] for s in stocks]
+    dfs = [s.df.iloc[:] for s in stocks]
     env = PortfolioAllocationEnvironment(dfs, ['ranking_score', 'relative_vol'])
 
     obs = env.reset()
@@ -854,36 +854,45 @@ if __name__ == "__main__":
     print("Even Actions", env.portfolio_value)
     plt.plot(env.value_memory, label="Even Actions")
 
-    # obs = env.reset()
-    # while True:
-    #     action = [random.random() for _ in range(len(env.stocks))]
-    #     obs, reward, done, info = env.step(action)
-    #     if done:
-    #         break
-    # print("Random Actions", env.portfolio_value)
-    # plt.plot(env.value_memory, label="Random Actions")
+    obs = env.reset()
+    while True:
+        action = [random.random() for _ in range(len(env.stocks))]
+        obs, reward, done, info = env.step(action)
+        if done:
+            break
+    print("Random Actions", env.portfolio_value)
+    plt.plot(env.value_memory, label="Random Actions")
 
-    # # print(sum(PortfolioAllocationEnvironment.softmax_normalization([0 for _ in range(100)])))
+    obs = env.reset()
+    while True:
+        action = [random.uniform(-5,5) for _ in range(len(env.stocks))]
+        obs, reward, done, info = env.step(action)
+        if done:
+            break
+    print("Very Random Actions", env.portfolio_value)
+    plt.plot(env.value_memory, label="Very Random Actions")
+
     
     
-    # sigmoid_v = np.vectorize(lambda x: 1 / (1 + math.exp(-x)))
-    # obs = env.reset()
-    # while True:
-    #     action = sigmoid_v(obs[0])
-    #     obs, reward, done, info = env.step(action)
-    #     if done:
-    #         break
-    # print("Score Actions", env.portfolio_value)
-    # plt.plot(env.value_memory, label="Score Actions")
+    sigmoid_v = np.vectorize(lambda x: 1 / (1 + math.exp(-x)))
+    obs = env.reset()
+    while True:
+        # action = sigmoid_v(obs[0])
+        action = obs[0]
+        obs, reward, done, info = env.step(action)
+        if done:
+            break
+    print("Score Actions", env.portfolio_value)
+    plt.plot(env.value_memory, label="Score Actions")
 
 
-    # title = f"Comparison {len(env.stocks)}"
-    # plt.title(title)
-    # plt.xlabel("Steps")
-    # plt.ylabel("Return")
-    # plt.legend()
-    # plt.savefig(f"{title}")
-    # plt.clf()
+    title = f"Comparison {len(env.stocks)}"
+    plt.title(title)
+    plt.xlabel("Steps")
+    plt.ylabel("Return")
+    plt.legend()
+    plt.savefig(f"{title}")
+    plt.clf()
     
 
 

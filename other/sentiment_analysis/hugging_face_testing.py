@@ -1,6 +1,7 @@
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
-import torch
-import torch.nn.functional as F
+from transformers import pipeline
+#, AutoTokenizer, AutoModelForSequenceClassification
+# import torch
+# import torch.nn.functional as F
 
 
 # with open("test_titles.txt", "r") as file:
@@ -17,7 +18,7 @@ classifier = pipeline("sentiment-analysis")
 #     print(results[i], titles[i])
 
 
-# print(classifier(["Philip Morris loses case against Australia's tobacco plain"]))
+print(classifier(["Philip Morris loses case against Australia's tobacco plain"]))
 
 
 

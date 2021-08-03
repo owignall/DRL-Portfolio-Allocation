@@ -8,17 +8,23 @@ COULD DO
 """
 
 from constants import *
-
-import requests
-from bs4 import BeautifulSoup
+from storage import *
+# General
 from datetime import datetime
 import numpy as np
 import pandas as pd
+import math
 import time
+# Scraping
+import requests
+from bs4 import BeautifulSoup
 import threading
 import re
 import json
-import math
+# Sentiment
+from transformers import pipeline
+from textblob import TextBlob
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 E_MIN = 60
 E_HOUR = 60 * E_MIN
@@ -342,18 +348,26 @@ class OldStock:
         self.calculate_technical_indicators()
 
 # NEW APPROACH
+"""
+TO DO
+    - Add scores for upgrades and downgrades as well as grade
+    - Implement sentiment extraction from news articles
+
+"""
 
 class Stock:
-    def __init__(self, name, code, ic_name):
+    def __init__(self, name, code, ic_name, start_date="2014-01-01", end_date="2021-01-01", df=None, search_term=None):
         self.name = name
         self.code = code
         self.ic_name = ic_name
-        self.data_start = int(time.time() - 8 * E_YEAR)
-        self.data_end = int(time.time())
-        self.df = self._initialize_df()
+        self.start_date = self._iso_to_datetime(start_date) #datetime(*[int(d) for d in start_date.split("-")])
+        self.end_date = self._iso_to_datetime(end_date) # datetime(*[int(d) for d in end_date.split("-")])
+        self.df = self._initialize_df() if df == None else df
+        self.search_term = name if search_term == None else search_term
 
         # Parameters
         self.rs_decay = 0.9
+        self.ss_decay = 0.9
 
         # Links
         self.investing_link =f"https://uk.investing.com/equities/{self.ic_name}"
@@ -373,15 +387,16 @@ class Stock:
                 except ValueError:
                     pass
         data_points = []
-        period1 = str(self.data_start)
-        period2 = str(self.data_end)
+        period1 = str(int(self.start_date.timestamp()))
+        period2 = str(int(self.end_date.timestamp()))
         interval = "1d"
         file_link = f"https://query1.finance.yahoo.com/v7/finance/download/{self.code}?period1={period1}&period2={period2}&interval={interval}"
         request = requests.get(file_link, headers=HEADER)
         content = str(request.content).replace("'", "").split("\\n")
         # cols = content[0].split(",")
         for i in range(1, len(content)):
-            new_point = map(_convert_type, [self.code] + content[i].split(","))
+            new_point = [_convert_type(d) for d in [self.code] + content[i].split(",")]
+            new_point[1] = self._iso_to_datetime(new_point[1])
             data_points.append(new_point)
         if len(data_points) == 0:
             raise Exception("No data was retrieved by the extraction function")
@@ -412,12 +427,11 @@ class Stock:
         json_text = re.search(r'^\s*root\.App\.main\s*=\s*({.*?})\s*;\s*$', script.string, flags=re.MULTILINE).group(1)
         data = json.loads(json_text)
         rankings_scraped = data['context']['dispatcher']['stores']['QuoteSummaryStore']['upgradeDowngradeHistory']['history']
-        
-        # DF APPROACH
+
         rankings_dict = dict()
         for r in rankings_scraped:
             investment_ranking = {'action':r['action'], 'from':r['fromGrade'], 'to': r['toGrade']}
-            date = datetime.fromtimestamp(r['epochGradeDate']).strftime('%Y-%m-%d')
+            date = self._iso_to_datetime(datetime.fromtimestamp(r['epochGradeDate']).strftime('%Y-%m-%d'))
             if date in rankings_dict:
                 rankings_dict[date].append(investment_ranking)
             else:
@@ -431,18 +445,16 @@ class Stock:
                 rankings = rankings_dict[self.df.iloc[i]['date']]
                 values = [RANKING_VALUES[r['to']] if r['to'] in RANKING_VALUES else 0 for r in rankings]
                 score = (self.rs_decay * previous_score) + sum(values)
-                # print(score, values)
             else:
                 rankings = []
                 score = self.rs_decay * previous_score
-                # print(score)
             previous_score = score
             rankings_by_date_list.append(rankings)
             ranking_scores.append(score)    
         self.df['rankings'] = rankings_by_date_list
         self.df['ranking_score'] = ranking_scores
 
-    def extract_news_data(self, investing=True, google=True, threads=5):
+    def extract_news_data(self, investing=True, google=False, threads=5, verbose=False):
         
         def _convert_date(news_date):
             # Converts format of date e.g. Apr 14, 2021 -> 2021-04-14
@@ -475,9 +487,9 @@ class Stock:
                     title = a.text
                     link = a['href']
                     author = details[0].text[3:]
-                    date = _convert_date(details[1].text[3:])
+                    date = self._iso_to_datetime(_convert_date(details[1].text[3:]))
 
-                    new_article = {'title': title, 'link': link, 'author': author}
+                    new_article = {'title': title, 'link': link, 'author': author, 'source': 'investing'}
                     if date in articles_dict:
                         articles_dict[date].append(new_article)
                     else:
@@ -485,13 +497,14 @@ class Stock:
                 valid[i] = True
         
         if investing:
-            print("Extracting Investing Articles")
+            if verbose: print("Extracting Investing Articles")
             # Populate a dictionary with scraped articles
             articles_dict = dict()
             # Use threading to request pages and extract articles
             start_page = 1
             searching = True
             while searching:
+                if verbose: print(f"{start_page} - {start_page + threads}")
                 threads_list = []
                 valid = [None] * threads
                 for n in range(start_page, start_page + threads):
@@ -595,6 +608,48 @@ class Stock:
         for key, value in generated_lists.items():
             self.df[key] = value
     
+    def calculate_news_sentiment(self, hugging_face=True, text_blob=False, vader=False, verbose=False):
+        """Use various libraries to extract sentiment from news articles"""
+        if hugging_face:
+            if verbose: print("Hugging face")
+            classifier = pipeline("sentiment-analysis")
+            for i in range(len(self.df)):
+                for a in self.df.loc[i, 'articles']:
+                    a['hugging_face'] = classifier(a['title'])[0]
+                    if verbose: print(a['hugging_face'])
+        
+        if text_blob:
+            if verbose: print("Text blob")
+            for i in range(len(self.df)):
+                for a in self.df.loc[i, 'articles']:
+                    title_sentiment = TextBlob(a['title']).sentiment
+                    a['text_blob'] = {"polarity": title_sentiment.polarity, "subjectivity": title_sentiment.subjectivity}
+
+        if vader:
+            if verbose: print("Vader")
+            analyzer = SentimentIntensityAnalyzer()
+            for i in range(len(self.df)):
+                for a in self.df.loc[i, 'articles']:
+                    a['vader'] = analyzer.polarity_scores(a['title'])
+        
+        # Hugging face scores
+        # if hugging_face:
+        if verbose: print("Calculating Hugging face scores")
+        previous = 0
+        scores = []
+        for i in range(len(self.df)):
+            if len(self.df.loc[i,'articles']) > 0:
+                values = [HF_LABEL_VALUES[a['hugging_face']['label']] for a in self.df.loc[i,'articles']]
+                score = (self.ss_decay * previous) + sum(values)
+            else:
+                score = (self.ss_decay * previous)
+            scores.append(score)
+            previous = score
+        
+        self.df['hf_score'] = scores
+
+        # COULD ADD ENSEMBLE OF SCORES
+
     def extract_and_calculate_all(self, verbose=True):
         if verbose: print("Extracting investment ranking data")
         self.extract_investment_ranking_data()
@@ -612,18 +667,46 @@ class Stock:
     def save_as_excel(self):
         self.df.to_excel(f"{self.code}.xlsx")
 
+    @staticmethod
+    def _iso_to_datetime(string_date):
+        return datetime(*[int(d) for d in string_date.split("-")])
 
 
 if __name__ == "__main__":
-    s = Stock("Apple", "AAPL", "apple-computer-inc")
-    # s.extract_price_data()
-    s.calculate_technical_indicators()
-    print(s.df)
+    # s = Stock("Apple", "AAPL", "apple-computer-inc")
+    # save_stock(s, "data")
+    # s.extract_investment_ranking_data()
+    # s.extract_news_data(verbose=True)
+    # save_stock(s, "data")
+
+    s = retrieve_dill_object("data\AAPL_2021-08-03.dill")
+    s.ss_decay = 0.8
+    s.calculate_news_sentiment(verbose=True, hugging_face=False, vader=False, text_blob=False)
+    # save_stock(s, "data")
+
+    # for v in s.df.loc[:, 'hf_score']:
+    #     print(v)
+
+    # s.save_as_excel()
+    # for day_articles in s.df['articles']:
+    #     for a in day_articles:
+    #         print(a['title'])
+    #         print(a['text_blob'])
+    #         print(a['vader'])
+
+
+    # df = pd.read_excel("APPL_df")
+    # s = Stock("Apple", "AAPL", "apple-computer-inc", df=df) 
+    # s.calculate_news_sentiment(verbose=True)
+    # save_stock(s, "data")
+
+    # # s.extract_price_data()
+    # s.calculate_technical_indicators()
+    # print(s.df)
     # s.extract_news_data()
     # print(s.loc[:,'inv_articles'])
     # for a in s.df['inv_articles']:
     
-
     
 
 
