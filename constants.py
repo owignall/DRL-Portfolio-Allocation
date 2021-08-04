@@ -17,6 +17,14 @@ GOOGLE_HEADERS = {
 # Sentiment Analysis
 
 RANKING_VALUES = {
+    "Cautious": -1,
+    "Conviction Buy": 1,
+    "Below Average": -1,
+    "Above Average": 1,
+    "Underperformer": -1,
+    "Overperformer": 1,
+    "Fair Value": 0,
+    "": 0,
     "Mixed": 0,
     "Reduce": -1,
     "Hold Neutral": 0,
@@ -50,6 +58,14 @@ RANKING_VALUES = {
     "Underweight": -1,
     "Sell": -1,
     "Outperform": 1
+}
+
+CHANGE_VALUES = {
+    'init': 0, 
+    'reit': 0, 
+    'down': -1, 
+    'up': 1, 
+    'main': 0
 }
 
 HF_LABEL_VALUES = {

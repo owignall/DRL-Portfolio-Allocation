@@ -243,15 +243,16 @@ def main():
     # df = pd.read_csv("data/df.csv.zip", compression="zip")
 
 
-    stock_arguments = get_snp500_stock_arguments()
-    # print(stock_arguments)
-    for a in stock_arguments:
-        print(str(a) + ",")
+    # stock_arguments = get_snp500_stock_arguments()
+    # # print(stock_arguments)
+    # for a in stock_arguments:
+    #     print(str(a) + ",")
 
-    # for i in range(len(stock_arguments)):
-    #     s = Stock(*stock_arguments[i])
-    #     s.extract_and_calculate_basic()
-    #     save_stock(s, "data/snp_stocks_basic")
+    for i in range(80, len(SNP_500_TOP_100)):
+        s = Stock(*SNP_500_TOP_100[i])
+        print(s)
+        s.extract_and_calculate_basic(verbose=False)
+        save_stock(s, "data/snp_stocks_basic")
 
 
 

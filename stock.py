@@ -348,7 +348,7 @@ TO DO
 """
 
 class Stock:
-    def __init__(self, name, code, ic_name, start_date="2012-01-01", end_date="2021-01-01", df=pd.DataFrame(), search_term=None):
+    def __init__(self, name, code, ic_name, start_date="2014-01-01", end_date="2021-01-01", df=pd.DataFrame(), search_term=None):
         self.name = name
         self.code = code
         self.ic_name = ic_name
@@ -385,6 +385,8 @@ class Stock:
         interval = "1d"
         file_link = f"https://query1.finance.yahoo.com/v7/finance/download/{self.code}?period1={period1}&period2={period2}&interval={interval}"
         request = requests.get(file_link, headers=STANDARD_HEADERS)
+        if request.status_code == 401:
+            raise Exception("Yahoo finance rejected request")
         content = str(request.content).replace("'", "").split("\\n")
         # cols = content[0].split(",")
         for i in range(1, len(content)):
@@ -415,6 +417,8 @@ class Stock:
         # https://www.mattbutton.com/how-to-scrape-stock-upgrades-and-downgrades-from-yahoo-finance/
         url = f"https://uk.finance.yahoo.com/quote/{self.code}/analysis"
         page = requests.get(url, headers=STANDARD_HEADERS)
+        if page.status_code == 401:
+            raise Exception("Yahoo finance rejected request")
         soup = BeautifulSoup(page.content,'html.parser')
         script = soup.find('script', text=re.compile(r'root\.App\.main'))
         json_text = re.search(r'^\s*root\.App\.main\s*=\s*({.*?})\s*;\s*$', script.string, flags=re.MULTILINE).group(1)
@@ -432,20 +436,33 @@ class Stock:
         # Rankings by date list
         rankings_by_date_list = []
         ranking_scores = []
-        previous_score = 0
+        previous_rank_score = 0
+        change_scores = []
+        previous_change_score = 0
         for i in range(len(self.df)):
             if self.df.iloc[i]['date'] in rankings_dict:
                 rankings = rankings_dict[self.df.iloc[i]['date']]
-                values = [RANKING_VALUES[r['to']] if r['to'] in RANKING_VALUES else 0 for r in rankings]
-                score = (self.rs_decay * previous_score) + sum(values)
+                ranking_values = [RANKING_VALUES[r['to']] if r['to'] in RANKING_VALUES else 0 for r in rankings]
+                for r in rankings:
+                    if r['to'] not in RANKING_VALUES:
+                        print(r)
+                # ranking_values = [RANKING_VALUES[r['to']] for r in rankings]
+                ranking_score = (self.rs_decay * previous_rank_score) + sum(ranking_values)
+                change_values = [CHANGE_VALUES[r['action']] for r in rankings]
+                change_score = (self.rs_decay * previous_change_score) + sum(change_values)
             else:
                 rankings = []
-                score = self.rs_decay * previous_score
-            previous_score = score
+                ranking_score = self.rs_decay * previous_rank_score
+                change_score = self.rs_decay * previous_change_score
+            previous_rank_score = ranking_score
+            previous_change_score = change_score
             rankings_by_date_list.append(rankings)
-            ranking_scores.append(score)    
+            ranking_scores.append(ranking_score)
+            change_scores.append(change_score)
+
         self.df['rankings'] = rankings_by_date_list
         self.df['ranking_score'] = ranking_scores
+        self.df['ranking_change_score'] = change_scores
 
     def extract_news_data(self, investing=True, google=False, threads=5, verbose=False):
         
@@ -665,13 +682,21 @@ class Stock:
 
     @staticmethod
     def _iso_to_datetime(string_date):
-        return datetime(*[int(d) for d in string_date.split("-")])
+        try:
+            return datetime(*[int(d) for d in string_date.split("-")])
+        except ValueError as e:
+            print(f"Failed to convert '{string_date}'")
 
 
 if __name__ == "__main__":
-    # s = Stock("Apple", "AAPL", "apple-computer-inc")
+    # stocks = [Stock(*sa) for sa in SNP_500_TOP_100]
+    # for s in stocks:
+    #     s.extract_investment_ranking_data()
+    s = Stock("Apple", "AAPL", "apple-computer-inc")
     # save_stock(s, "data")
-    # s.extract_investment_ranking_data()
+    s.extract_investment_ranking_data()
+    for i in range(len(s.df)): 
+        print("RS:", s.df.loc[i, 'ranking_score'], "CS", s.df.loc[i, 'ranking_change_score'])
     # s.extract_news_data(verbose=True)
     # save_stock(s, "data")
 
@@ -680,10 +705,10 @@ if __name__ == "__main__":
 
     # print(pd.DataFrame())
 
-    df = pd.read_excel("AAPL.xlsx")
-    ns = Stock("Apple", "AAPL", "apple-computer-inc", df=df)
+    # df = pd.read_excel("AAPL.xlsx")
+    # ns = Stock("Apple", "AAPL", "apple-computer-inc", df=df)
 
-    print(ns.df)
+    # print(ns.df)
 
 
 

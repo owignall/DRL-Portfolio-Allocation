@@ -842,10 +842,9 @@ class PortfolioAllocationEnvironment(gym.Env):
 if __name__ == "__main__":
     
     stocks = retrieve_stocks_from_folder("data\snp_stocks_basic")
-    # for s in stocks:
-    #     s.save_as_excel()
-    dfs = [s.df.iloc[:] for s in stocks]
-    env = PortfolioAllocationEnvironment(dfs, ['ranking_score', 'relative_vol'])
+    dfs = [s.df.iloc[:1000] for s in stocks[:] if len(s.df) == 1763]
+    print([len(df) for df in dfs])
+    env = PortfolioAllocationEnvironment(dfs, ['ranking_score', 'ranking_change_score'])
 
     obs = env.reset()
     while True:
@@ -884,8 +883,19 @@ if __name__ == "__main__":
         obs, reward, done, info = env.step(action)
         if done:
             break
-    print("Score Actions", env.portfolio_value)
-    plt.plot(env.value_memory, label="Score Actions")
+    print("New Score Actions", env.portfolio_value)
+    plt.plot(env.value_memory, label="New Score Actions")
+
+
+    obs = env.reset()
+    while True:
+        # action = sigmoid_v(obs[1])
+        action = obs[1] * 3
+        obs, reward, done, info = env.step(action)
+        if done:
+            break
+    print("Change Score Actions", env.portfolio_value)
+    plt.plot(env.value_memory, label="Change Score Actions")
 
 
     title = f"Comparison {len(env.stocks)}"
@@ -895,14 +905,3 @@ if __name__ == "__main__":
     plt.legend()
     plt.savefig(f"{title}")
     plt.clf()
-    
-
-
-    # mark_env = V1(training=False)
-    # obs = mark_env.reset()
-    # while True:
-    #     action = [1 for _ in range(len(mark_env.stocks))]
-    #     obs, reward, done, info = mark_env.step(action)
-    #     if done:
-    #         break
-    # print("Market", mark_env.portfolio_value)
