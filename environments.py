@@ -757,6 +757,8 @@ class V1(gym.Env): # Note this may be different in the notebook
         obs = e.reset()
         return e, obs
 
+# NEW APPROACH
+
 # New stock class environment
 class PortfolioAllocationEnvironment(gym.Env):
     

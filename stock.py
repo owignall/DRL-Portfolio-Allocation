@@ -26,14 +26,6 @@ from transformers import pipeline
 from textblob import TextBlob
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-E_MIN = 60
-E_HOUR = 60 * E_MIN
-E_DAY = 24 * E_HOUR
-E_YEAR = 365 * E_DAY
-
-MONTHS = {'jan': "01", 'feb': "02", 'mar': "03", 'apr': "04", 'may': "05", 'jun': "06", 'jul': "07", 'aug': "08", 'sep': "09",  'oct': "10", 'nov': "11", 'dec': "12"}
-
-HEADER = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.0 Safari/537.36'}
 
 class Article:
     def __init__(self, a_title, a_link, a_author):
@@ -51,7 +43,7 @@ class Article:
                 raise ValueError("Link for this article is not a url extension")
             else:
                 url = f"https://uk.investing.com{self.link}"
-                page = requests.get(url, headers=HEADER)
+                page = requests.get(url, headers=STANDARD_HEADERS)
                 soup = BeautifulSoup(page.content,'html.parser')
 
                 left_col = soup.find('section', id='leftColumn')
@@ -142,7 +134,7 @@ class OldStock:
         period2 = str(self.data_end)
         interval = "1d"
         file_link = f"https://query1.finance.yahoo.com/v7/finance/download/{self.code}?period1={period1}&period2={period2}&interval={interval}"
-        request = requests.get(file_link, headers=HEADER)
+        request = requests.get(file_link, headers=STANDARD_HEADERS)
         content = str(request.content).replace("'", "").split("\\n")
         for i in range(1, len(content)):
             new_point = DailyData(*content[i].split(","))
@@ -157,7 +149,7 @@ class OldStock:
         # https://www.mattbutton.com/how-to-scrape-stock-upgrades-and-downgrades-from-yahoo-finance/
         """
         url = f"https://uk.finance.yahoo.com/quote/GOOG/financials"
-        page = requests.get(url, headers=HEADER)
+        page = requests.get(url, headers=STANDARD_HEADERS)
         soup = BeautifulSoup(page.content,'html.parser')
         script = soup.find('script', text=re.compile(r'root\.App\.main'))
         json_text = re.search(r'^\s*root\.App\.main\s*=\s*({.*?})\s*;\s*$', script.string, flags=re.MULTILINE).group(1)
@@ -180,7 +172,7 @@ class OldStock:
         def _extract_from_page(articles_dict, n, i, valid):
             # Adds 
             url = f"https://uk.investing.com/equities/{self.ic_name}-news/{str(n)}"
-            page = requests.get(url, headers=HEADER)
+            page = requests.get(url, headers=STANDARD_HEADERS)
             soup = BeautifulSoup(page.content,'html.parser')
 
             # Check you haven't looped
@@ -263,7 +255,7 @@ class OldStock:
         # REFERENCE
         # https://www.mattbutton.com/how-to-scrape-stock-upgrades-and-downgrades-from-yahoo-finance/
         url = f"https://uk.finance.yahoo.com/quote/{self.code}/analysis"
-        page = requests.get(url, headers=HEADER)
+        page = requests.get(url, headers=STANDARD_HEADERS)
         soup = BeautifulSoup(page.content,'html.parser')
         script = soup.find('script', text=re.compile(r'root\.App\.main'))
         json_text = re.search(r'^\s*root\.App\.main\s*=\s*({.*?})\s*;\s*$', script.string, flags=re.MULTILINE).group(1)
@@ -356,13 +348,13 @@ TO DO
 """
 
 class Stock:
-    def __init__(self, name, code, ic_name, start_date="2014-01-01", end_date="2021-01-01", df=None, search_term=None):
+    def __init__(self, name, code, ic_name, start_date="2012-01-01", end_date="2021-01-01", df=pd.DataFrame(), search_term=None):
         self.name = name
         self.code = code
         self.ic_name = ic_name
         self.start_date = self._iso_to_datetime(start_date) #datetime(*[int(d) for d in start_date.split("-")])
         self.end_date = self._iso_to_datetime(end_date) # datetime(*[int(d) for d in end_date.split("-")])
-        self.df = self._initialize_df() if df == None else df
+        self.df = self._initialize_df() if df.empty else df
         self.search_term = name if search_term == None else search_term
 
         # Parameters
@@ -377,6 +369,7 @@ class Stock:
         rep = f"{self.code} - {self.name}\n{self.df.describe()}"
         return rep
 
+    # Data Extraction Methods
     def _initialize_df(self):
         """Extract price data and use this to create a new dataframe for the stock"""
         def _convert_type(value):
@@ -391,7 +384,7 @@ class Stock:
         period2 = str(int(self.end_date.timestamp()))
         interval = "1d"
         file_link = f"https://query1.finance.yahoo.com/v7/finance/download/{self.code}?period1={period1}&period2={period2}&interval={interval}"
-        request = requests.get(file_link, headers=HEADER)
+        request = requests.get(file_link, headers=STANDARD_HEADERS)
         content = str(request.content).replace("'", "").split("\\n")
         # cols = content[0].split(",")
         for i in range(1, len(content)):
@@ -409,7 +402,7 @@ class Stock:
         # https://www.mattbutton.com/how-to-scrape-stock-upgrades-and-downgrades-from-yahoo-finance/
         """
         url = f"https://uk.finance.yahoo.com/quote/GOOG/financials"
-        page = requests.get(url, headers=HEADER)
+        page = requests.get(url, headers=STANDARD_HEADERS)
         soup = BeautifulSoup(page.content,'html.parser')
         script = soup.find('script', text=re.compile(r'root\.App\.main'))
         json_text = re.search(r'^\s*root\.App\.main\s*=\s*({.*?})\s*;\s*$', script.string, flags=re.MULTILINE).group(1)
@@ -421,7 +414,7 @@ class Stock:
         # REFERENCE
         # https://www.mattbutton.com/how-to-scrape-stock-upgrades-and-downgrades-from-yahoo-finance/
         url = f"https://uk.finance.yahoo.com/quote/{self.code}/analysis"
-        page = requests.get(url, headers=HEADER)
+        page = requests.get(url, headers=STANDARD_HEADERS)
         soup = BeautifulSoup(page.content,'html.parser')
         script = soup.find('script', text=re.compile(r'root\.App\.main'))
         json_text = re.search(r'^\s*root\.App\.main\s*=\s*({.*?})\s*;\s*$', script.string, flags=re.MULTILINE).group(1)
@@ -467,7 +460,7 @@ class Stock:
         def _extract_from_investing_page(articles_dict, n, i, valid):
             # Adds 
             url = f"https://uk.investing.com/equities/{self.ic_name}-news/{str(n)}"
-            page = requests.get(url, headers=HEADER)
+            page = requests.get(url, headers=STANDARD_HEADERS)
             soup = BeautifulSoup(page.content,'html.parser')
 
             # Check you haven't looped
@@ -531,7 +524,8 @@ class Stock:
 
         # Add articles to DataFrame
         self.df['articles'] = articles
-        
+    
+    # Data Processing Methods
     def calculate_technical_indicators(self):
         """Calculates technical indicators and adds them to the DataFrame."""
 
@@ -650,6 +644,7 @@ class Stock:
 
         # COULD ADD ENSEMBLE OF SCORES
 
+    # Compound Methods
     def extract_and_calculate_all(self, verbose=True):
         if verbose: print("Extracting investment ranking data")
         self.extract_investment_ranking_data()
@@ -664,6 +659,7 @@ class Stock:
         if verbose: print("Calculating technical indicators")
         self.calculate_technical_indicators()
 
+    # Other Methods
     def save_as_excel(self):
         self.df.to_excel(f"{self.code}.xlsx")
 
@@ -679,9 +675,20 @@ if __name__ == "__main__":
     # s.extract_news_data(verbose=True)
     # save_stock(s, "data")
 
-    s = retrieve_dill_object("data\AAPL_2021-08-03.dill")
-    s.ss_decay = 0.8
-    s.calculate_news_sentiment(verbose=True, hugging_face=False, vader=False, text_blob=False)
+    # s = retrieve_dill_object("data\AAPL_2021-08-03.dill")
+    # s.save_as_excel()
+
+    # print(pd.DataFrame())
+
+    df = pd.read_excel("AAPL.xlsx")
+    ns = Stock("Apple", "AAPL", "apple-computer-inc", df=df)
+
+    print(ns.df)
+
+
+
+    # s.ss_decay = 0.8
+    # s.calculate_news_sentiment(verbose=True, hugging_face=False, vader=False, text_blob=False)
     # save_stock(s, "data")
 
     # for v in s.df.loc[:, 'hf_score']:
