@@ -21,6 +21,7 @@ from bs4 import BeautifulSoup
 import threading
 import re
 import json
+import selenium
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -352,7 +353,7 @@ TO DO
 """
 
 class Stock:
-    def __init__(self, name, code, ic_name, start_date="2014-01-01", end_date="2021-01-01", df=pd.DataFrame(), search_term=None):
+    def __init__(self, name, code, ic_name, start_date="2014-01-01", end_date="2021-01-01", df=pd.DataFrame(), search_term=None, driver=None):
         self.name = name
         self.code = code
         self.ic_name = ic_name
@@ -360,6 +361,7 @@ class Stock:
         self.end_date = self._iso_to_datetime(end_date) # datetime(*[int(d) for d in end_date.split("-")])
         self.df = self._initialize_df() if df.empty else df
         self.search_term = name if search_term == None else search_term
+        self.driver = driver
 
         # Parameters
         self.rs_decay = 0.9
@@ -567,6 +569,14 @@ class Stock:
             
             url = f"https://www.google.co.uk/search?q={self.search_term}&tbs=cdr:1,cd_min:{from_date},cd_max:{to_date}&tbm=nws"
             driver.get(url)
+            # Check to see if there is a Capcha form that needs to be completed
+            try:
+                driver.find_element_by_xpath('//*[@id="captcha-form"]')
+                time.sleep(2)
+                print("\nThere appears to be Captcha form. Complete this and then press enter.")
+                input()
+            except selenium.common.exceptions.NoSuchElementException as e:
+                pass
             # Iterate through pages
             for i in range(max_pages):
                 # Extract articles from page
@@ -594,22 +604,28 @@ class Stock:
                 
         if google:
             if verbose: print("Extracting Google News")
-            # Setup webdriver
-            headless = False
-            options = webdriver.ChromeOptions()
-            if headless: options.add_argument('headless')
-            options.add_argument('window-size=1200x600')
-            driver = webdriver.Chrome(WEBDRIVER_PATH, chrome_options=options)
-            # Accept conditions
-            driver.get("https://www.google.co.uk/search?")
-            button_xpath = '//*[@id="L2AGLb"]'
-            WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, button_xpath)))
-            button = driver.find_element_by_xpath(button_xpath)
-            button.click()
+            if self.driver == None:
+                driver_local = True
+                # Setup webdriver
+                headless = False
+                options = webdriver.ChromeOptions()
+                if headless: options.add_argument('headless')
+                options.add_argument('window-size=1200x600')
+                driver = webdriver.Chrome(WEBDRIVER_PATH, chrome_options=options)
+                # Accept conditions
+                driver.get("https://www.google.co.uk/search?")
+                button_xpath = '//*[@id="L2AGLb"]'
+                WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, button_xpath)))
+                button = driver.find_element_by_xpath(button_xpath)
+                button.click()
+            else:
+                driver_local = False
+                driver = self.driver
+
             # Extract news headlines from google news
             earliest_year = self.df.loc[0,'date'].year
             latest_year = self.df.loc[len(self.df) - 1,'date'].year
-            # earliest_year = latest_year # TEMP
+            earliest_year = latest_year # TEMP
             google_articles_dict = dict()
             for y in range(earliest_year, latest_year + 1):
                 from_date = f"01/01/{y}"
@@ -617,7 +633,7 @@ class Stock:
                 _extract_from_google_news_search(google_articles_dict, driver, from_date, to_date, max_pages=10)
             
             # Quit driver when finished
-            driver.quit()
+            if driver_local: driver.quit()
 
             # Create dated list from dictionary
             google_articles = []
@@ -799,23 +815,43 @@ class Stock:
 
 if __name__ == "__main__":
     # stocks = [Stock(*sa) for sa in SNP_500_TOP_100]
+
+    # Setup webdriver
+    headless = False
+    options = webdriver.ChromeOptions()
+    if headless: options.add_argument('headless')
+    options.add_argument("--log-level=3")
+    options.add_argument('window-size=1200x600')
+    driver = webdriver.Chrome(WEBDRIVER_PATH, chrome_options=options)
+    # Accept conditions
+    driver.get("https://www.google.co.uk/search?")
+    button_xpath = '//*[@id="L2AGLb"]'
+    WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, button_xpath)))
+    button = driver.find_element_by_xpath(button_xpath)
+    button.click()
+
     # for s in stocks:
     #     s.extract_investment_ranking_data()
-    s = Stock("Apple", "AAPL", "apple-computer-inc")
-    # s = Stock('Cisco', 'CSCO', 'cisco-sys-inc')
+    s1 = Stock("Apple", "AAPL", "apple-computer-inc", driver=driver)
+    s2 = Stock('Cisco', 'CSCO', 'cisco-sys-inc', driver=driver)
     # s = Stock('General Electric', 'GE', 'general-electric')
     # s = Stock(*SNP_500_TOP_100[90])
-    print(s.name)
+    # print(s.name)
     # save_stock(s, "data")
     # s.extract_investment_ranking_data()
     # for i in range(len(s.df)): 
     #     print("RS:", s.df.loc[i, 'ranking_score'], "CS", s.df.loc[i, 'ranking_change_score'])
-    s.extract_news_data(investing=False, google=True) 
-    s.calculate_news_sentiment(verbose=True)
-    save_stock(s, "data")
+    s1.extract_news_data(investing=False, google=True) 
+    s1.calculate_news_sentiment(verbose=True)
+    # save_stock(s1, "data")
+
+    s2.extract_news_data(investing=False, google=True) 
+    s2.calculate_news_sentiment(verbose=True)
+    # save_stock(s2, "data")
 
     # s = retrieve_dill_object("data\GE_2021-08-05.dill")
-    s.save_as_excel()
+    s1.save_as_excel()
+    s2.save_as_excel()
 
     # print(pd.DataFrame())
 

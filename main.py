@@ -229,7 +229,20 @@ def test_accuracy(environments, date_pairs):
                 with open(f"Agent-{a}_Env-{e_count}_dates-{d_count}.txt", "w") as file:
                     file.write(f"{e}\n{e.__class__.__name__}\n{str(dates)}\n===Baseline Stats===\n{stats}\n===DRL State===\n{perf_stats_all}")
 
-
+def get_webdriver_for_google():
+    # Setup webdriver
+    headless = False
+    options = webdriver.ChromeOptions()
+    if headless: options.add_argument('headless')
+    options.add_argument('window-size=1200x600')
+    driver = webdriver.Chrome(WEBDRIVER_PATH, chrome_options=options)
+    # Accept conditions
+    driver.get("https://www.google.co.uk/search?")
+    button_xpath = '//*[@id="L2AGLb"]'
+    WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, button_xpath)))
+    button = driver.find_element_by_xpath(button_xpath)
+    button.click()
+    return driver
 
 def main():
     # all_envs = [StockPortfolioEnv, TIOnlyStockPortfolioEnv, GSAndTIStockPortfolioEnv]
@@ -248,7 +261,7 @@ def main():
     # for a in stock_arguments:
     #     print(str(a) + ",")
 
-    for i in range(80, len(SNP_500_TOP_100)):
+    for i in range(len(SNP_500_TOP_100)):
         s = Stock(*SNP_500_TOP_100[i])
         print(s)
         s.extract_and_calculate_basic(verbose=False)
