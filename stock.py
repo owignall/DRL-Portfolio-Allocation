@@ -21,6 +21,10 @@ from bs4 import BeautifulSoup
 import threading
 import re
 import json
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 # Sentiment
 from transformers import pipeline
 from textblob import TextBlob
@@ -465,16 +469,17 @@ class Stock:
         self.df['ranking_change_score'] = change_scores
 
     def extract_news_data(self, investing=True, google=False, threads=5, verbose=False):
-        
-        def _convert_date(news_date):
-            # Converts format of date e.g. Apr 14, 2021 -> 2021-04-14
-            if "ago" in news_date:
-                return datetime.today().strftime('%Y-%m-%d')
-            
-            date_componets = news_date.replace(",", "").split(" ")
-            return f"{date_componets[2]}-{MONTHS[date_componets[0].lower()]}-{date_componets[1]}"
-        
+
         def _extract_from_investing_page(articles_dict, n, i, valid):
+            
+            def _convert_investing_date(news_date):
+                # Converts format of date e.g. Apr 14, 2021 -> 2021-04-14
+                if "ago" in news_date:
+                    return datetime.today().strftime('%Y-%m-%d')
+                
+                date_components = news_date.replace(",", "").split(" ")
+                return f"{date_components[2]}-{MONTHS[date_components[0].lower()]}-{date_components[1]}"
+            
             # Adds 
             url = f"https://uk.investing.com/equities/{self.ic_name}-news/{str(n)}"
             page = requests.get(url, headers=STANDARD_HEADERS)
@@ -497,19 +502,32 @@ class Stock:
                     title = a.text
                     link = a['href']
                     author = details[0].text[3:]
-                    date = self._iso_to_datetime(_convert_date(details[1].text[3:]))
+                    date = self._iso_to_datetime(_convert_investing_date(details[1].text[3:]))
+                    
+                    new_article = {'title': title, 'link': link, 'author': author}
 
-                    new_article = {'title': title, 'link': link, 'author': author, 'source': 'investing'}
                     if date in articles_dict:
                         articles_dict[date].append(new_article)
                     else:
                         articles_dict[date] = [new_article]
+                    
+
+                    # TEMP
+                    self.a_count += 1
+                    if self.name in title:
+                        self.yes_count += 1
                 valid[i] = True
         
         if investing:
-            if verbose: print("Extracting Investing Articles")
+            #TEMP
+            self.yes_count = 0
+            self.a_count = 0
+
+            # MIGHT BE WORTH CHECKING THAT WEEKEND ARTICLES AREN'T LOST
+
+            if verbose: print("Extracting Investing News")
             # Populate a dictionary with scraped articles
-            articles_dict = dict()
+            investing_articles_dict = dict()
             # Use threading to request pages and extract articles
             start_page = 1
             searching = True
@@ -518,7 +536,7 @@ class Stock:
                 threads_list = []
                 valid = [None] * threads
                 for n in range(start_page, start_page + threads):
-                    t = threading.Thread(target=_extract_from_investing_page, args=(articles_dict, n, n - 1 - start_page, valid))
+                    t = threading.Thread(target=_extract_from_investing_page, args=(investing_articles_dict, n, n - 1 - start_page, valid))
                     t.start()
                     threads_list.append(t)
                 for t in threads_list:
@@ -528,20 +546,103 @@ class Stock:
                 else:
                     start_page += threads
             
-            articles = []
+            investing_articles = []
             for i in range(len(self.df)):
-                if self.df.loc[i,'date'] in articles_dict:
-                    articles.append(articles_dict[self.df.loc[i,'date']])
+                if self.df.loc[i,'date'] in investing_articles_dict:
+                    investing_articles.append(investing_articles_dict[self.df.loc[i,'date']])
                 else:
-                    articles.append([])
-        
-        if google:
-            # MIGHT BE BETTER SOURCE THAN INVESTING.COM
-            pass
+                    investing_articles.append([])
+            
+            print("yes_count", self.yes_count)
+            print("a_count", self.a_count)
+            # Add articles to DataFrame
+            self.df['investing_articles'] = investing_articles
 
-        # Add articles to DataFrame
-        self.df['articles'] = articles
-    
+        def _extract_from_google_news_search(articles_dict, driver, from_date, to_date, max_pages=1000):
+
+            def _convert_google_date(date_string):
+                # Converts date in format e.g. 22 Sept 2020 -> 2020-09-22
+                date_components = date_string.split(" ")
+                return f"{date_components[2]}-{MONTHS[date_components[1].lower()[:3]]}-{date_components[0]}"
+            
+            url = f"https://www.google.co.uk/search?q={self.search_term}&tbs=cdr:1,cd_min:{from_date},cd_max:{to_date}&tbm=nws"
+            driver.get(url)
+            # Iterate through pages
+            for i in range(max_pages):
+                # Extract articles from page
+                page = driver.page_source
+                soup = BeautifulSoup(page,'html.parser')
+                articles_div = soup.find('div', id='rso')
+                if articles_div == None:
+                    pass
+                else:
+                    a_divs = articles_div.find_all('div', class_="dbsr")
+                    for a_div in a_divs:
+                        article = dict()
+                        article['title'] = a_div.find('div', role="heading").text
+                        article['link'] = a_div.find('a')['href']
+                        date = self._iso_to_datetime(_convert_google_date(a_div.find('span', class_="WG9SHc").text))
+                        if date in articles_dict:
+                            articles_dict[date].append(article)
+                        else:
+                            articles_dict[date] = [article]
+
+                # Move to next page
+                WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="pnnext"]')))
+                next_button = driver.find_element_by_xpath('//*[@id="pnnext"]')
+                next_button.click()
+                
+        if google:
+            if verbose: print("Extracting Google News")
+            # Setup webdriver
+            headless = False
+            options = webdriver.ChromeOptions()
+            if headless: options.add_argument('headless')
+            options.add_argument('window-size=1200x600')
+            driver = webdriver.Chrome(WEBDRIVER_PATH, chrome_options=options)
+            # Accept conditions
+            driver.get("https://www.google.co.uk/search?")
+            button_xpath = '//*[@id="L2AGLb"]'
+            WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, button_xpath)))
+            button = driver.find_element_by_xpath(button_xpath)
+            button.click()
+            # Extract news headlines from google news
+            earliest_year = self.df.loc[0,'date'].year
+            latest_year = self.df.loc[len(self.df) - 1,'date'].year
+            # earliest_year = latest_year # TEMP
+            google_articles_dict = dict()
+            for y in range(earliest_year, latest_year + 1):
+                from_date = f"01/01/{y}"
+                to_date = f"12/31/{y}"
+                _extract_from_google_news_search(google_articles_dict, driver, from_date, to_date, max_pages=10)
+            
+            # Quit driver when finished
+            driver.quit()
+
+            # Create dated list from dictionary
+            google_articles = []
+            for i in range(len(self.df)):
+                if self.df.loc[i,'date'] in google_articles_dict:
+                    google_articles.append(google_articles_dict[self.df.loc[i,'date']])
+                else:
+                    google_articles.append([])
+            
+            # # TEMP CHECK OF WEEKEND LOSS
+            # dict_as = []
+            # for key, value in google_articles_dict.items():
+            #     for a in value:
+            #         dict_as.append(a)
+            # date_as = []
+            # for d in google_articles:
+            #     for a in d:
+            #         date_as.append(a)
+            # print("dict_as", len(dict_as))
+            # print("date_as", len(date_as))
+
+
+            # Add articles to DataFrame
+            self.df['google_articles'] = google_articles
+
     # Data Processing Methods
     def calculate_technical_indicators(self):
         """Calculates technical indicators and adds them to the DataFrame."""
@@ -620,44 +721,52 @@ class Stock:
             self.df[key] = value
     
     def calculate_news_sentiment(self, hugging_face=True, text_blob=False, vader=False, verbose=False):
-        """Use various libraries to extract sentiment from news articles"""
-        if hugging_face:
-            if verbose: print("Hugging face")
-            classifier = pipeline("sentiment-analysis")
-            for i in range(len(self.df)):
-                for a in self.df.loc[i, 'articles']:
-                    a['hugging_face'] = classifier(a['title'])[0]
-                    if verbose: print(a['hugging_face'])
-        
-        if text_blob:
-            if verbose: print("Text blob")
-            for i in range(len(self.df)):
-                for a in self.df.loc[i, 'articles']:
-                    title_sentiment = TextBlob(a['title']).sentiment
-                    a['text_blob'] = {"polarity": title_sentiment.polarity, "subjectivity": title_sentiment.subjectivity}
+        """Use various libraries to extract sentiment from all available news articles"""
+        # Check which sources we have extracted from
+        possible_sources = ["google_articles", "investing_articles"]
+        available_sources = []
+        for source in possible_sources:
+            if source in self.df:
+                available_sources.append(source)
+        # Extract sentiment from available sources
+        for source in available_sources:
+            if hugging_face:
+                if verbose: print("Hugging face")
+                classifier = pipeline("sentiment-analysis")
+                for i in range(len(self.df)):
+                    for a in self.df.loc[i, source]:
+                        a['hugging_face'] = classifier(a['title'])[0]
+                        if verbose: print(a['hugging_face'])
+            
+            if text_blob:
+                if verbose: print("Text blob")
+                for i in range(len(self.df)):
+                    for a in self.df.loc[i, source]:
+                        title_sentiment = TextBlob(a['title']).sentiment
+                        a['text_blob'] = {"polarity": title_sentiment.polarity, "subjectivity": title_sentiment.subjectivity}
 
-        if vader:
-            if verbose: print("Vader")
-            analyzer = SentimentIntensityAnalyzer()
-            for i in range(len(self.df)):
-                for a in self.df.loc[i, 'articles']:
-                    a['vader'] = analyzer.polarity_scores(a['title'])
+            if vader:
+                if verbose: print("Vader")
+                analyzer = SentimentIntensityAnalyzer()
+                for i in range(len(self.df)):
+                    for a in self.df.loc[i, source]:
+                        a['vader'] = analyzer.polarity_scores(a['title'])
         
-        # Hugging face scores
-        # if hugging_face:
-        if verbose: print("Calculating Hugging face scores")
-        previous = 0
-        scores = []
-        for i in range(len(self.df)):
-            if len(self.df.loc[i,'articles']) > 0:
-                values = [HF_LABEL_VALUES[a['hugging_face']['label']] for a in self.df.loc[i,'articles']]
-                score = (self.ss_decay * previous) + sum(values)
-            else:
-                score = (self.ss_decay * previous)
-            scores.append(score)
-            previous = score
+            # Hugging face scores
+            if hugging_face:
+                if verbose: print("Calculating Hugging face scores")
+                previous = 0
+                scores = []
+                for i in range(len(self.df)):
+                    if len(self.df.loc[i, source]) > 0:
+                        values = [HF_LABEL_VALUES[a['hugging_face']['label']] for a in self.df.loc[i, source]]
+                        score = (self.ss_decay * previous) + sum(values)
+                    else:
+                        score = (self.ss_decay * previous)
+                    scores.append(score)
+                    previous = score
         
-        self.df['hf_score'] = scores
+            self.df[f'hf_{source}_score'] = scores
 
         # COULD ADD ENSEMBLE OF SCORES
 
@@ -693,15 +802,20 @@ if __name__ == "__main__":
     # for s in stocks:
     #     s.extract_investment_ranking_data()
     s = Stock("Apple", "AAPL", "apple-computer-inc")
+    # s = Stock('Cisco', 'CSCO', 'cisco-sys-inc')
+    # s = Stock('General Electric', 'GE', 'general-electric')
+    # s = Stock(*SNP_500_TOP_100[90])
+    print(s.name)
     # save_stock(s, "data")
-    s.extract_investment_ranking_data()
-    for i in range(len(s.df)): 
-        print("RS:", s.df.loc[i, 'ranking_score'], "CS", s.df.loc[i, 'ranking_change_score'])
-    # s.extract_news_data(verbose=True)
-    # save_stock(s, "data")
+    # s.extract_investment_ranking_data()
+    # for i in range(len(s.df)): 
+    #     print("RS:", s.df.loc[i, 'ranking_score'], "CS", s.df.loc[i, 'ranking_change_score'])
+    s.extract_news_data(investing=False, google=True) 
+    s.calculate_news_sentiment(verbose=True)
+    save_stock(s, "data")
 
-    # s = retrieve_dill_object("data\AAPL_2021-08-03.dill")
-    # s.save_as_excel()
+    # s = retrieve_dill_object("data\GE_2021-08-05.dill")
+    s.save_as_excel()
 
     # print(pd.DataFrame())
 

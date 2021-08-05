@@ -3,17 +3,23 @@ from bs4 import BeautifulSoup
 
 
 # TEMP
-from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
-import torch
-import torch.nn.functional as F
-classifier = pipeline("sentiment-analysis")
+# from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
+# import torch
+# import torch.nn.functional as F
+# classifier = pipeline("sentiment-analysis")
 
+
+# NID = ";NID=220=nKB9JQELI7RUAAeZyv-hY1fr3VlVqWmdHknm0i53EpNRihIq0xLauG14CWNi0MmDqGiPckmRG_cFXldT2_e3CYecSYXD21mV7A6i2kjQx53zGz59zDFXft3-GF8TFdLSw-hd6zuoTabPjnOx3uQuwqBZTl20x8ufNr0WA53jIzN-Nu6pRm3xopSJqVbVYsYQlVnE0zzqdaoyLQqXkM372BC_MzZxaw7TRN9zjd4Ew7taAj7FpzjnX1bi2Qg9uhJGa3d1sxXfn0Qx8oRX_YcRIGhWGmoX6VKV3wVTJus1R8_yzR0y9RJUsR36xJ1z2o-wknaJdLd490FWCXh27LFfrBhXPDJG2pGzR8s73ocszd1V5ekquaOa"	
+# CONSENT=YES+cb.20210801-17-p0.en+FX+525;
 
 GOOGLE_HEADERS = {
-    'cookie': 'CONSENT=YES+cb.20210727-07-p1.en+FX+232; 1P_JAR=2021-07-29-20',
+    'cookie': f'CONSENT=YES+cb.20210727-07-p1.en+FX+232; 1P_JAR=2021-07-29-20',
+    # 'cookie': 'CONSENT=YES+cb.20210801-17-p0.en+FX+740; Domain=.google.com; Expires=Sun, 10-Jan-2038 07:59:59 GMT; Path=/; Secure; SameSite=none',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36 Edg/92.0.902.55'
 }
-NID = ";NID=220=nKB9JQELI7RUAAeZyv-hY1fr3VlVqWmdHknm0i53EpNRihIq0xLauG14CWNi0MmDqGiPckmRG_cFXldT2_e3CYecSYXD21mV7A6i2kjQx53zGz59zDFXft3-GF8TFdLSw-hd6zuoTabPjnOx3uQuwqBZTl20x8ufNr0WA53jIzN-Nu6pRm3xopSJqVbVYsYQlVnE0zzqdaoyLQqXkM372BC_MzZxaw7TRN9zjd4Ew7taAj7FpzjnX1bi2Qg9uhJGa3d1sxXfn0Qx8oRX_YcRIGhWGmoX6VKV3wVTJus1R8_yzR0y9RJUsR36xJ1z2o-wknaJdLd490FWCXh27LFfrBhXPDJG2pGzR8s73ocszd1V5ekquaOa"	
+
+
+
 def get_articles(search, from_date, to_date, max_pages=1000):
     articles = []
     for i in range(max_pages):
@@ -21,7 +27,6 @@ def get_articles(search, from_date, to_date, max_pages=1000):
         url = f"https://www.google.co.uk/search?q={search}{cr}&tbs=cdr:1,cd_min:{from_date},cd_max:{to_date}&tbm=nws&start={10 * i}"
         page = requests.get(url, headers=GOOGLE_HEADERS)
         if page.status_code == 429:
-            print(page)
             raise Exception("Request limit exceeded")
         soup = BeautifulSoup(page.content,'html.parser')
         articles_div = soup.find('div', id='rso')
@@ -57,12 +62,20 @@ names = [
 
 search = "Apple"
 # search = names[1]
-from_date = "01/01/2020"
-to_date = "01/01/2021"
+from_date = "01/01/2014"
+to_date = "01/01/2015"
 page_number = 1
 
 url = f"https://www.google.co.uk/search?q={search}&tbs=cdr:1,cd_min:{from_date},cd_max:{to_date}&tbm=nws&start=0"
 print(url)
+
+# googleTrendsUrl = 'https://consent.google.com/s?continue=https://www.google.co.uk/search?q%3DApple%26tbs%3Dcdr:1,cd_min:01/01/2020,cd_max:01/01/2021%26tbm%3Dnws%26start%3D0&v=cb.20210801-17-p0.en%2BFX%2B525&gl=GB&hl=en&x=8&pc=srp&src=1&t=ADw3F8hmeygVWDBsrMl7VMTGbLqr6Y_p0w:1628099971334&rl=1&ca=r'
+# response = requests.get(googleTrendsUrl, headers=GOOGLE_HEADERS)
+# if response.status_code == 200:
+#     g_cookies = response.cookies.get_dict()
+#     print(g_cookies)
+# else:
+#     print(response.status_code)
 
 for search in names[0:1]:
     all_articles = get_articles(search, from_date, to_date, max_pages=200)
