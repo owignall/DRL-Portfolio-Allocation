@@ -40,9 +40,33 @@ button.click()
 
 
 
+WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="hdtbMenus"]/span[2]/g-popup/div[1]')))
+driver.find_element_by_xpath('//*[@id="hdtbMenus"]/span[2]/g-popup/div[1]').click()
 
-# next_button = EC.presence_of_element_located((By.XPATH, '//*[@id="pnnext"]'))
-# WebDriverWait(driver, 5).until(next_button)
+WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="lb"]/div/g-menu/g-menu-item[8]')))
+driver.find_element_by_xpath('//*[@id="lb"]/div/g-menu/g-menu-item[8]').click()
+
+WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="OouJcb"]')))
+from_date_box = driver.find_element_by_xpath('//*[@id="OouJcb"]')
+from_date_box.clear()
+from_date_box.send_keys("01/01/2016")
+
+WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="rzG2be"]')))
+to_date_box = driver.find_element_by_xpath('//*[@id="rzG2be"]')
+to_date_box.clear()
+to_date_box.send_keys("12/31/2016")
+
+WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="T3kYXe"]/g-button')))
+driver.find_element_by_xpath('//*[@id="T3kYXe"]/g-button').click()
+
+
+sleep(5)
+
+WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="lst-ib"]')))
+search_box = driver.find_element_by_xpath('//*[@id="lst-ib"]')
+search_box.clear()
+search_box.send_keys("Microsoft")
+search_box.submit()
 
 
 

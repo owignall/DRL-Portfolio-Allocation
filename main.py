@@ -260,12 +260,13 @@ def main():
     # # print(stock_arguments)
     # for a in stock_arguments:
     #     print(str(a) + ",")
+    driver = get_webdriver_for_google()
 
-    for i in range(len(SNP_500_TOP_100)):
-        s = Stock(*SNP_500_TOP_100[i])
+    for i in range(3, len(SNP_500_TOP_100)):
+        s = Stock(*SNP_500_TOP_100[i], driver=driver)
         print(s)
-        s.extract_and_calculate_basic(verbose=False)
-        save_stock(s, "data/snp_stocks_basic")
+        s.extract_and_calculate_all(verbose=False)
+        save_stock(s, "data/snp_stocks_full")
 
 
 

@@ -764,7 +764,7 @@ class PortfolioAllocationEnvironment(gym.Env):
     
     def __init__(self, stocks: list[pd.DataFrame], state_attributes: list[str]):
         self.check_arguments_valid(stocks, state_attributes)
-        self.stocks = stocks
+        self.stocks = [s.reset_index() for s in stocks]
         self.state_attributes = state_attributes
         self.final_index = len(stocks[0]) - 1
 
@@ -841,12 +841,18 @@ class PortfolioAllocationEnvironment(gym.Env):
 
 if __name__ == "__main__":
     
-    stocks = retrieve_stocks_from_folder("data\snp_stocks_basic")
-    dfs = [s.df.iloc[:1000] for s in stocks[:] if len(s.df) == 1763]
-    print([len(df) for df in dfs])
-    env = PortfolioAllocationEnvironment(dfs, ['ranking_score', 'ranking_change_score'])
+    # stocks = retrieve_stocks_from_folder("data\snp_stocks_basic")
+    stocks = retrieve_stocks_from_folder("data\snp_stocks_full")
+
+    dfs = [s.df.loc[:] for s in stocks[:]]
+
+    for df in dfs:
+        print(len(df))
+
+    env = PortfolioAllocationEnvironment(dfs, ['ranking_score', 'ranking_change_score', 'hf_google_articles_score'])
 
     obs = env.reset()
+    print(obs)
     while True:
         action = [1 for _ in range(len(env.stocks))]
         obs, reward, done, info = env.step(action)
@@ -896,6 +902,16 @@ if __name__ == "__main__":
             break
     print("Change Score Actions", env.portfolio_value)
     plt.plot(env.value_memory, label="Change Score Actions")
+
+    obs = env.reset()
+    while True:
+        # action = sigmoid_v(obs[1])
+        action = obs[2] * 3
+        obs, reward, done, info = env.step(action)
+        if done:
+            break
+    print("HF Actions", env.portfolio_value)
+    plt.plot(env.value_memory, label="HF Actions")
 
 
     title = f"Comparison {len(env.stocks)}"

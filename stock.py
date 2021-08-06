@@ -347,10 +347,10 @@ class OldStock:
 # NEW APPROACH
 """
 TO DO
-    - Add scores for upgrades and downgrades as well as grade
-    - Implement sentiment extraction from news articles
+...
 
 """
+
 
 class Stock:
     def __init__(self, name, code, ic_name, start_date="2014-01-01", end_date="2021-01-01", df=pd.DataFrame(), search_term=None, driver=None):
@@ -470,7 +470,7 @@ class Stock:
         self.df['ranking_score'] = ranking_scores
         self.df['ranking_change_score'] = change_scores
 
-    def extract_news_data(self, investing=True, google=False, threads=5, verbose=False):
+    def extract_news_data(self, investing=True, google=True, threads=5, verbose=False):
 
         def _extract_from_investing_page(articles_dict, n, i, valid):
             
@@ -559,81 +559,97 @@ class Stock:
             print("a_count", self.a_count)
             # Add articles to DataFrame
             self.df['investing_articles'] = investing_articles
-
-        def _extract_from_google_news_search(articles_dict, driver, from_date, to_date, max_pages=1000):
+        
+        def _extract_from_google_news_searchs(articles_dict, driver, pages_per_range=10): #, from_date, to_date, max_pages=1000
 
             def _convert_google_date(date_string):
                 # Converts date in format e.g. 22 Sept 2020 -> 2020-09-22
                 date_components = date_string.split(" ")
                 return f"{date_components[2]}-{MONTHS[date_components[1].lower()[:3]]}-{date_components[0]}"
             
-            url = f"https://www.google.co.uk/search?q={self.search_term}&tbs=cdr:1,cd_min:{from_date},cd_max:{to_date}&tbm=nws"
-            driver.get(url)
-            # Check to see if there is a Capcha form that needs to be completed
-            try:
-                driver.find_element_by_xpath('//*[@id="captcha-form"]')
-                time.sleep(2)
-                print("\nThere appears to be Captcha form. Complete this and then press enter.")
-                input()
-            except selenium.common.exceptions.NoSuchElementException as e:
-                pass
-            # Iterate through pages
-            for i in range(max_pages):
-                # Extract articles from page
-                page = driver.page_source
-                soup = BeautifulSoup(page,'html.parser')
-                articles_div = soup.find('div', id='rso')
-                if articles_div == None:
+            def _check_for_captcha(driver):
+                try:
+                    driver.find_element_by_xpath('//*[@id="captcha-form"]')
+                    time.sleep(2)
+                    print("\nThere appears to be Captcha form. Complete this and then press enter.")
+                    input()
+                except selenium.common.exceptions.NoSuchElementException as e:
                     pass
-                else:
-                    a_divs = articles_div.find_all('div', class_="dbsr")
-                    for a_div in a_divs:
-                        article = dict()
-                        article['title'] = a_div.find('div', role="heading").text
-                        article['link'] = a_div.find('a')['href']
-                        date = self._iso_to_datetime(_convert_google_date(a_div.find('span', class_="WG9SHc").text))
-                        if date in articles_dict:
-                            articles_dict[date].append(article)
-                        else:
-                            articles_dict[date] = [article]
+            def _return_element(driver, xpath):
+                WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, xpath)))
+                return driver.find_element_by_xpath(xpath)
+            
+            def _change_date_range(driver, from_date, to_date):
+                _return_element(driver, '//*[@id="hdtbMenus"]/span[2]/g-popup/div[1]').click()
+                _return_element(driver, '//*[@id="lb"]/div/g-menu/g-menu-item[8]').click()
+                from_date_box = _return_element(driver, '//*[@id="OouJcb"]')
+                from_date_box.clear()
+                from_date_box.send_keys(from_date)
+                to_date_box = _return_element(driver, '//*[@id="rzG2be"]')
+                to_date_box.clear()
+                to_date_box.send_keys(to_date)
+                _return_element(driver, '//*[@id="T3kYXe"]/g-button').click()
+            
+            def _change_search_term(driver, search):
+                search_box = _return_element(driver, '//*[@id="lst-ib"]')
+                search_box.clear()
+                search_box.send_keys(search)
+                # search_box.submit()
+                _return_element(driver, '//*[@id="mKlEF"]').click()
+            
+            # Change search term
+            _change_search_term(driver, self.search_term)
+            # Check to see if there is a Capcha form that needs to be completed
+            _check_for_captcha(driver)
 
-                # Move to next page
-                WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="pnnext"]')))
-                next_button = driver.find_element_by_xpath('//*[@id="pnnext"]')
-                next_button.click()
+            earliest_year = self.df.loc[0,'date'].year
+            latest_year = self.df.loc[len(self.df) - 1,'date'].year
+            for y in range(earliest_year, latest_year + 1):
+                from_date = f"01/01/{y}"
+                to_date = f"12/31/{y}"
+                _change_date_range(driver, from_date, to_date)
+                # Iterate through pages
+                for i in range(pages_per_range):
+                    _check_for_captcha(driver)
+                    # Extract articles from page
+                    page = driver.page_source
+                    soup = BeautifulSoup(page,'html.parser')
+                    articles_div = soup.find('div', id='rso')
+                    if articles_div == None:
+                        pass
+                    else:
+                        a_divs = articles_div.find_all('div', class_="dbsr")
+                        for a_div in a_divs:
+                            article = dict()
+                            article['title'] = a_div.find('div', role="heading").text
+                            article['link'] = a_div.find('a')['href']
+                            date = self._iso_to_datetime(_convert_google_date(a_div.find('span', class_="WG9SHc").text))
+                            if date in articles_dict:
+                                articles_dict[date].append(article)
+                            else:
+                                articles_dict[date] = [article]
+
+                    # Move to next page
+                    WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="pnnext"]')))
+                    next_button = driver.find_element_by_xpath('//*[@id="pnnext"]')
+                    next_button.click()
                 
         if google:
             if verbose: print("Extracting Google News")
             if self.driver == None:
                 driver_local = True
-                # Setup webdriver
-                headless = False
-                options = webdriver.ChromeOptions()
-                if headless: options.add_argument('headless')
-                options.add_argument('window-size=1200x600')
-                driver = webdriver.Chrome(WEBDRIVER_PATH, chrome_options=options)
-                # Accept conditions
-                driver.get("https://www.google.co.uk/search?")
-                button_xpath = '//*[@id="L2AGLb"]'
-                WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, button_xpath)))
-                button = driver.find_element_by_xpath(button_xpath)
-                button.click()
+                driver = self.get_google_news_driver()
             else:
                 driver_local = False
                 driver = self.driver
 
             # Extract news headlines from google news
-            earliest_year = self.df.loc[0,'date'].year
-            latest_year = self.df.loc[len(self.df) - 1,'date'].year
-            earliest_year = latest_year # TEMP
             google_articles_dict = dict()
-            for y in range(earliest_year, latest_year + 1):
-                from_date = f"01/01/{y}"
-                to_date = f"12/31/{y}"
-                _extract_from_google_news_search(google_articles_dict, driver, from_date, to_date, max_pages=10)
-            
+            _extract_from_google_news_searchs(google_articles_dict, driver)
+
             # Quit driver when finished
             if driver_local: driver.quit()
+            self.driver = None
 
             # Create dated list from dictionary
             google_articles = []
@@ -791,9 +807,11 @@ class Stock:
         if verbose: print("Extracting investment ranking data")
         self.extract_investment_ranking_data()
         if verbose: print("Extracting news data")
-        self.extract_news_data()
+        self.extract_news_data(investing=False)
         if verbose: print("Calculating technical indicators")
         self.calculate_technical_indicators()
+        if verbose: print("Calculating news sentiment")
+        self.calculate_news_sentiment()
     
     def extract_and_calculate_basic(self, verbose=True):
         if verbose: print("Extracting investment ranking data")
@@ -812,23 +830,35 @@ class Stock:
         except ValueError as e:
             print(f"Failed to convert '{string_date}'")
 
+    @staticmethod
+    def get_google_news_driver():
+        # Setup webdriver
+        headless = False
+        options = webdriver.ChromeOptions()
+        if headless: options.add_argument('headless')
+        options.add_argument('window-size=1200x600')
+        driver = webdriver.Chrome(WEBDRIVER_PATH, chrome_options=options)
+        # Accept conditions
+        driver.get("https://www.google.co.uk/search?")
+        button_xpath = '//*[@id="L2AGLb"]'
+        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, button_xpath)))
+        button = driver.find_element_by_xpath(button_xpath)
+        button.click()
+        url = "https://www.google.co.uk/search?q=Apple&tbs=cdr:1,cd_min:01/01/2014,cd_max:12/31/2014&tbm=nws"
+        driver.get(url)
+        try:
+            driver.find_element_by_xpath('//*[@id="captcha-form"]')
+            time.sleep(2)
+            print("\nThere appears to be Captcha form. Complete this and then press enter.")
+            input()
+        except selenium.common.exceptions.NoSuchElementException as e:
+            pass
+        return driver
 
 if __name__ == "__main__":
     # stocks = [Stock(*sa) for sa in SNP_500_TOP_100]
 
-    # Setup webdriver
-    headless = False
-    options = webdriver.ChromeOptions()
-    if headless: options.add_argument('headless')
-    options.add_argument("--log-level=3")
-    options.add_argument('window-size=1200x600')
-    driver = webdriver.Chrome(WEBDRIVER_PATH, chrome_options=options)
-    # Accept conditions
-    driver.get("https://www.google.co.uk/search?")
-    button_xpath = '//*[@id="L2AGLb"]'
-    WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, button_xpath)))
-    button = driver.find_element_by_xpath(button_xpath)
-    button.click()
+    driver = Stock.get_google_news_driver()
 
     # for s in stocks:
     #     s.extract_investment_ranking_data()
@@ -842,16 +872,17 @@ if __name__ == "__main__":
     # for i in range(len(s.df)): 
     #     print("RS:", s.df.loc[i, 'ranking_score'], "CS", s.df.loc[i, 'ranking_change_score'])
     s1.extract_news_data(investing=False, google=True) 
-    s1.calculate_news_sentiment(verbose=True)
+    s2.extract_news_data(investing=False, google=True) 
     # save_stock(s1, "data")
 
-    s2.extract_news_data(investing=False, google=True) 
+    # s2.extract_news_data(investing=False, google=True) 
+    s1.calculate_news_sentiment(verbose=True)
     s2.calculate_news_sentiment(verbose=True)
     # save_stock(s2, "data")
 
     # s = retrieve_dill_object("data\GE_2021-08-05.dill")
-    s1.save_as_excel()
-    s2.save_as_excel()
+    # s1.save_as_excel()
+    # s2.save_as_excel()
 
     # print(pd.DataFrame())
 
