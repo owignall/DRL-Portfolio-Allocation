@@ -12,5 +12,3 @@ results/*
 tensorboard_log/*
 trained_models/*
 venv/*
-
-other/chromedriver/*
