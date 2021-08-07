@@ -16,9 +16,9 @@ GOOGLE_HEADERS = {
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36 Edg/92.0.902.55'
 }
 
-folder_contents = os.listdir("other\chromedriver")
+folder_contents = os.listdir("other/chromedriver")
 file_name = [file for file in folder_contents if file.startswith("chromedriver")][0]
-WEBDRIVER_PATH = f"other\chromedriver\{file_name}"
+WEBDRIVER_PATH = f"other/chromedriver/{file_name}"
 
 # Sentiment Analysis
 
