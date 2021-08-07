@@ -762,7 +762,7 @@ class V1(gym.Env): # Note this may be different in the notebook
 # New stock class environment
 class PortfolioAllocationEnvironment(gym.Env):
     
-    def __init__(self, stocks: list[pd.DataFrame], state_attributes: list[str]):
+    def __init__(self, stocks, state_attributes):
         self.check_arguments_valid(stocks, state_attributes)
         self.stocks = [s.reset_index() for s in stocks]
         self.state_attributes = state_attributes
