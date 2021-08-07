@@ -790,7 +790,7 @@ class PortfolioAllocationEnvironment(gym.Env):
 
     def step(self, action):
         if self.terminal: 
-            raise Exception("Environment in already in terminal state")
+            raise Exception("Environment already in terminal state")
         
         weights = self.softmax_normalization(action)
         # print(sum(weights))
