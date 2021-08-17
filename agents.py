@@ -16,7 +16,10 @@ from tensorflow import keras
 
 import numpy as np
 
-from collections import deque 
+from collections import deque
+
+# Baselines
+from stable_baselines3 import A2C, PPO
 
 class SingleStockDQNAgentWithDNN:
     def __init__(self):
@@ -365,6 +368,22 @@ class V2SingleStockWeightingDQNAgentWithDNN:
         plt.savefig(f"data/figs/{title}")
         plt.clf()
 
+
+
+
 if __name__ == "__main__":
-    agent = V2SingleStockWeightingDQNAgentWithDNN()
-    agent.train(1000, verbose=1, save_figs=True)
+    stocks = retrieve_stocks_from_folder("data\snp_stocks_basic")
+    dfs = [s.df.loc[:] for s in stocks[:]]
+    env = PortfolioAllocationEnvironment(dfs, ['cheats'])
+
+    model = A2C('MlpPolicy', env, verbose=1)
+    model.learn(total_timesteps=10000)
+
+    obs = env.reset()
+    while True:
+        action, _state = model.predict(obs, deterministic=True)
+        obs, reward, done, info = env.step(action)
+        # env.render()
+        if done:
+            break
+    print("Untrained agent", env.portfolio_value)

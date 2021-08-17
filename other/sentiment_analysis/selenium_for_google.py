@@ -10,9 +10,9 @@ from bs4 import BeautifulSoup
 from time import sleep
 
 # PATH = "C:/Program Files (x86)/Google/ChromeDriver/chromedriver.exe"
-PATH = "other\chromedriver.exe"
+PATH = "other\chromedriver\chromedriver.exe"
 options = webdriver.ChromeOptions()
-# options.add_argument('headless')
+options.add_argument('headless')
 options.add_argument('window-size=1200x600')
 # options.add_experimental_option("excludeSwitches", ['enable-automation']);
 # chromeDriverService = ChromeDriverService.CreateDefaultService()

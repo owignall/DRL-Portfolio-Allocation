@@ -18,7 +18,8 @@ classifier = pipeline("sentiment-analysis")
 #     print(results[i], titles[i])
 
 
-print(classifier(["Philip Morris loses case against Australia's tobacco plain"]))
+
+print(classifier(["Amazon reports sales growth of 37%, topping estimates"]))
 
 
 

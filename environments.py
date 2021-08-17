@@ -813,7 +813,7 @@ class PortfolioAllocationEnvironment(gym.Env):
 
         self.state = self.get_state()
         # self.reward = self.portfolio_value
-        self.reward = change_in_value
+        self.reward = change_in_value # Instead of portfolio value
         if self.date_index >= self.final_index: self.terminal = True
 
         return self.state, self.reward, self.terminal, {}
@@ -841,18 +841,19 @@ class PortfolioAllocationEnvironment(gym.Env):
 
 if __name__ == "__main__":
     
-    # stocks = retrieve_stocks_from_folder("data\snp_stocks_basic")
-    stocks = retrieve_stocks_from_folder("data\snp_stocks_full")
+    stocks = retrieve_stocks_from_folder("data\snp_stocks_basic")
+    # stocks = retrieve_stocks_from_folder("data\snp_stocks_full")
 
     dfs = [s.df.loc[:] for s in stocks[:]]
 
-    for df in dfs:
-        print(len(df))
+    # for df in dfs:
+    #     print(len(df))
 
-    env = PortfolioAllocationEnvironment(dfs, ['ranking_score', 'ranking_change_score', 'hf_google_articles_score'])
+    # env = PortfolioAllocationEnvironment(dfs, ['ranking_score', 'ranking_change_score', 'hf_google_articles_score'])
+    env = PortfolioAllocationEnvironment(dfs, ['ranking_score', 'ranking_change_score', 'cheats'])
 
     obs = env.reset()
-    print(obs)
+    # print(obs)
     while True:
         action = [1 for _ in range(len(env.stocks))]
         obs, reward, done, info = env.step(action)
@@ -880,17 +881,17 @@ if __name__ == "__main__":
     plt.plot(env.value_memory, label="Very Random Actions")
 
     
-    
-    sigmoid_v = np.vectorize(lambda x: 1 / (1 + math.exp(-x)))
-    obs = env.reset()
-    while True:
-        # action = sigmoid_v(obs[0])
-        action = obs[0]
-        obs, reward, done, info = env.step(action)
-        if done:
-            break
-    print("New Score Actions", env.portfolio_value)
-    plt.plot(env.value_memory, label="New Score Actions")
+    if len(obs) >= 3:
+        sigmoid_v = np.vectorize(lambda x: 1 / (1 + math.exp(-x)))
+        obs = env.reset()
+        while True:
+            # action = sigmoid_v(obs[0])
+            action = obs[0]
+            obs, reward, done, info = env.step(action)
+            if done:
+                break
+        print("New Score Actions", env.portfolio_value)
+        plt.plot(env.value_memory, label="New Score Actions")
 
 
     obs = env.reset()
@@ -906,11 +907,11 @@ if __name__ == "__main__":
     obs = env.reset()
     while True:
         # action = sigmoid_v(obs[1])
-        action = obs[2] * 3
+        action = obs[2]
         obs, reward, done, info = env.step(action)
         if done:
             break
-    print("HF Actions", env.portfolio_value)
+    print("Cheat Actions", env.portfolio_value)
     plt.plot(env.value_memory, label="HF Actions")
 
 

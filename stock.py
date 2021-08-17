@@ -802,6 +802,12 @@ class Stock:
 
         # COULD ADD ENSEMBLE OF SCORES
 
+    def calculate_cheat_values(self):
+        cheats = []
+        for i in range(0, len(self.df) - 1):
+            cheats.append((self.df.loc[i+1,'close'] / self.df.loc[i,'close']) - 1)
+        cheats.append(0)
+        self.df['cheats'] = cheats
     # Compound Methods
     def extract_and_calculate_all(self, verbose=True):
         if verbose: print("Extracting investment ranking data")
@@ -858,26 +864,34 @@ class Stock:
 if __name__ == "__main__":
     # stocks = [Stock(*sa) for sa in SNP_500_TOP_100]
 
-    driver = Stock.get_google_news_driver()
+    # driver = Stock.get_google_news_driver()
 
     # for s in stocks:
     #     s.extract_investment_ranking_data()
-    s1 = Stock("Apple", "AAPL", "apple-computer-inc", driver=driver)
-    s2 = Stock('Cisco', 'CSCO', 'cisco-sys-inc', driver=driver)
+    # s1 = Stock("Apple", "AAPL", "apple-computer-inc", driver=driver)
+    # s2 = Stock('Cisco', 'CSCO', 'cisco-sys-inc', driver=driver)
     # s = Stock('General Electric', 'GE', 'general-electric')
-    # s = Stock(*SNP_500_TOP_100[90])
+    s1 = Stock(*SNP_500_TOP_100[0])
+    print(s1.name)
+    s1.extract_and_calculate_basic()
+    s1.calculate_cheat_values()
+    print(s1.df)
+    # s1.extract_investment_ranking_data()
+    # s2 = Stock(code="XOM", name="XOM", ic_name=None)
+    # print(s2.name)
+    # s2.extract_investment_ranking_data()
     # print(s.name)
     # save_stock(s, "data")
     # s.extract_investment_ranking_data()
     # for i in range(len(s.df)): 
     #     print("RS:", s.df.loc[i, 'ranking_score'], "CS", s.df.loc[i, 'ranking_change_score'])
-    s1.extract_news_data(investing=False, google=True) 
-    s2.extract_news_data(investing=False, google=True) 
-    # save_stock(s1, "data")
-
+    # s1.extract_news_data(investing=False, google=True) 
     # s2.extract_news_data(investing=False, google=True) 
-    s1.calculate_news_sentiment(verbose=True)
-    s2.calculate_news_sentiment(verbose=True)
+    # # save_stock(s1, "data")
+
+    # # s2.extract_news_data(investing=False, google=True) 
+    # s1.calculate_news_sentiment(verbose=True)
+    # s2.calculate_news_sentiment(verbose=True)
     # save_stock(s2, "data")
 
     # s = retrieve_dill_object("data\GE_2021-08-05.dill")

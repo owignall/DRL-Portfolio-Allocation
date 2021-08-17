@@ -245,17 +245,23 @@ def main():
     # # print(stock_arguments)
     # for a in stock_arguments:
     #     print(str(a) + ",")
-    throttle = 60 * 10
+    # throttle = 60 * 10
 
-    driver = Stock.get_google_news_driver()
+    # driver = Stock.get_google_news_driver()
+
+    # for i in range(13, len(SNP_500_TOP_100)):
+    #     s = Stock(*SNP_500_TOP_100[i], driver=driver)
+    #     print(s)
+    #     s.extract_and_calculate_all(verbose=False)
+    #     save_stock(s, "data/snp_stocks_full")
+    #     time.sleep(throttle)
 
     for i in range(13, len(SNP_500_TOP_100)):
-        s = Stock(*SNP_500_TOP_100[i], driver=driver)
+        s = Stock(*SNP_500_TOP_100[i])
         print(s)
-        s.extract_and_calculate_all(verbose=False)
-        save_stock(s, "data/snp_stocks_full")
-        time.sleep(throttle)
-
+        s.extract_and_calculate_basic(verbose=False)
+        s.calculate_cheat_values()
+        save_stock(s, "data/snp_stocks_basic")
 
 
 
