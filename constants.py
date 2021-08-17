@@ -17,7 +17,7 @@ GOOGLE_HEADERS = {
 }
 
 folder_contents = os.listdir("other/chromedriver")
-files = [file for file in folder_contents if file.startswith("chromedriver")][0]
+files = [file for file in folder_contents if file.startswith("chromedriver")]
 file_name = files[0] if len(files) > 0 else ""
 WEBDRIVER_PATH = f"other/chromedriver/{file_name}"
 
