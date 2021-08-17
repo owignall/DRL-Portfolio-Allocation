@@ -768,7 +768,7 @@ class PortfolioAllocationEnvironment(gym.Env):
         self.state_attributes = state_attributes
         self.final_index = len(stocks[0]) - 1
 
-        self.action_space = spaces.Box(low=0, high=1, shape=(len(self.stocks),))
+        self.action_space = spaces.Box(low=0, high=1, shape=(1, len(self.stocks)))
         self.observation_space = spaces.Box(
             low=-np.inf,
             high=np.inf,
@@ -786,6 +786,7 @@ class PortfolioAllocationEnvironment(gym.Env):
         self.value_memory = [self.portfolio_value]
         self.date_memory = [self.stocks[0].loc[self.date_index, 'date']]
         self.actions_memory = [np.array([1 for _ in range(len(self.stocks))])]
+        self.reward_memory = []
         return self.state
 
     def step(self, action):
@@ -814,6 +815,7 @@ class PortfolioAllocationEnvironment(gym.Env):
         self.state = self.get_state()
         # self.reward = self.portfolio_value
         self.reward = change_in_value # Instead of portfolio value
+        self.reward_memory.append(self.reward)
         if self.date_index >= self.final_index: self.terminal = True
 
         return self.state, self.reward, self.terminal, {}
@@ -844,7 +846,7 @@ if __name__ == "__main__":
     stocks = retrieve_stocks_from_folder("data\snp_stocks_basic")
     # stocks = retrieve_stocks_from_folder("data\snp_stocks_full")
 
-    dfs = [s.df.loc[:] for s in stocks[:]]
+    dfs = [s.df.loc[:] for s in stocks[:5]]
 
     # for df in dfs:
     #     print(len(df))
@@ -907,12 +909,12 @@ if __name__ == "__main__":
     obs = env.reset()
     while True:
         # action = sigmoid_v(obs[1])
-        action = obs[2]
+        action = obs[2] * 3
         obs, reward, done, info = env.step(action)
         if done:
             break
     print("Cheat Actions", env.portfolio_value)
-    plt.plot(env.value_memory, label="HF Actions")
+    plt.plot(env.value_memory, label="Cheat Actions")
 
 
     title = f"Comparison {len(env.stocks)}"
