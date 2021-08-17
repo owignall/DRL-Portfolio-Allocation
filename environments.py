@@ -768,7 +768,7 @@ class PortfolioAllocationEnvironment(gym.Env):
         self.state_attributes = state_attributes
         self.final_index = len(stocks[0]) - 1
 
-        self.action_space = spaces.Box(low=0, high=1, shape=(1, len(self.stocks)))
+        self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(1, len(self.stocks)))
         self.observation_space = spaces.Box(
             low=-np.inf,
             high=np.inf,
