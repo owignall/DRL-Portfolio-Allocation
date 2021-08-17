@@ -19,7 +19,7 @@ import numpy as np
 from collections import deque
 
 # Baselines
-from stable_baselines3 import A2C, PPO
+from stable_baselines3 import A2C, PPO, DDPG, SAC, TD3
 
 class SingleStockDQNAgentWithDNN:
     def __init__(self):
