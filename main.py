@@ -6,7 +6,7 @@ Plan for this file.
     4. Test agent performance
 """
 
-# from agents import *
+from agents import *
 from environments import *
 from storage import *
 from constants import *
@@ -43,16 +43,52 @@ def snp_stocks_basic():
 
 def snp_stocks_full():
     throttle = 60 * 10
-    driver = Stock.get_google_news_driver(headless=True)
-    for i in range(0, len(SNP_500_TOP_100)):
+    driver = Stock.get_google_news_driver(headless=False)
+    for i in range(4, len(SNP_500_TOP_100)):
         s = Stock(*SNP_500_TOP_100[i], driver=driver)
         s.extract_and_calculate_all(verbose=False)
         save_stock(s, "data/snp_stocks_full")
         print(s.code)
         time.sleep(throttle)
 
+def experiment_1():
+    experiment_values = [(0.001, 0.99), (0.001, 0.9), (0.001, 0.7), (0.001, 0), (0.0005, 0), (0.005, 0), (0.01, 0)]
+    repeats = 10
+    total_training_steps = 100_000
+    attributes = ['cheats']
+    stocks = retrieve_stocks_from_folder("data/snp_stocks_basic")
+    train_dfs = [s.df.loc[:1000] for s in stocks[:]]
+    test_dfs = [s.df.loc[1000:] for s in stocks[:]]
+    for alpha, gamma in experiment_values:
+        print(f"Alpha = {alpha}, Gamma = {gamma}")
+        training_results = pd.DataFrame({"Episode": [i + 1 for i in range(len(train_dfs))]})
+        testing_results = pd.DataFrame({"Episode": [1]})
+        for i in range(repeats):
+            print(f"Repeat {i + 1}")
+            train_env = PortfolioAllocationEnvironment(train_dfs, attributes)
+            train_env.reset()
+            model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=alpha, gamma=gamma)
+            model.learn(total_timesteps=total_training_steps)
+
+            training_results[i + 1] = train_env.final_values
+
+            test_env = PortfolioAllocationEnvironment(test_dfs, attributes)
+            obs = test_env.reset()
+            while True:
+                action, _state = model.predict(obs, deterministic=True)
+                obs, reward, done, info = test_env.step(action)
+                if done:
+                    break
+
+            testing_results[i + 1] = [test_env.portfolio_value]
+        
+        path = f"data/results/experiment_1/"            
+        training_results.to_excel(path + f"{alpha}_{gamma}_training.xlsx")
+        testing_results.to_excel(path + f"{alpha}_{gamma}_testing.xlsx")
+
 if __name__ == "__main__":
-    snp_stocks_full()
+    # snp_stocks_full()
+    experiment_1()
 
 # OLD FUNCTIONS
 

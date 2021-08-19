@@ -30,6 +30,7 @@ class PortfolioAllocationEnvironment(gym.Env):
         self.stocks = [s.reset_index() for s in stocks]
         self.state_attributes = state_attributes
         self.final_index = len(stocks[0]) - 1
+        self.final_values = []
 
         self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(len(self.stocks),))
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(len(self.state_attributes), len(self.stocks)))
@@ -74,7 +75,9 @@ class PortfolioAllocationEnvironment(gym.Env):
         # self.reward = self.portfolio_value
         self.reward = change_in_value # Instead of portfolio value
         self.reward_memory.append(self.reward)
-        if self.date_index >= self.final_index: self.terminal = True
+        if self.date_index >= self.final_index: 
+            self.terminal = True
+            self.final_values.append(self.portfolio_value)
 
         return self.state, self.reward, self.terminal, {}
 

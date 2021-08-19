@@ -819,7 +819,7 @@ class Stock:
         self.calculate_cheat_values()
 
     def extract_and_calculate_all(self, verbose=True):
-        self.extract_and_calculate_basic()
+        self.extract_and_calculate_basic(verbose=verbose)
         if verbose: print("Extracting news data")
         self.extract_news_data(investing=False)
         if verbose: print("Calculating news sentiment")
