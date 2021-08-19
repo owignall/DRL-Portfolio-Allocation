@@ -61,7 +61,7 @@ def experiment_1():
     test_dfs = [s.df.loc[1000:] for s in stocks[:]]
     for alpha, gamma in experiment_values:
         print(f"Alpha = {alpha}, Gamma = {gamma}")
-        training_results = pd.DataFrame({"Episode": [i + 1 for i in range(len(train_dfs))]})
+        training_results = pd.DataFrame({"Episode": [i + 1 for i in range(len(train_dfs) // total_training_steps)]})
         testing_results = pd.DataFrame({"Episode": [1]})
         for i in range(repeats):
             print(f"Repeat {i + 1}")
