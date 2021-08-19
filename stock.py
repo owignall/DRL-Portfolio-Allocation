@@ -808,23 +808,23 @@ class Stock:
             cheats.append((self.df.loc[i+1,'close'] / self.df.loc[i,'close']) - 1)
         cheats.append(0)
         self.df['cheats'] = cheats
-    # Compound Methods
-    def extract_and_calculate_all(self, verbose=True):
-        if verbose: print("Extracting investment ranking data")
-        self.extract_investment_ranking_data()
-        if verbose: print("Extracting news data")
-        self.extract_news_data(investing=False)
-        if verbose: print("Calculating technical indicators")
-        self.calculate_technical_indicators()
-        if verbose: print("Calculating news sentiment")
-        self.calculate_news_sentiment()
     
+    # Compound Methods
     def extract_and_calculate_basic(self, verbose=True):
         if verbose: print("Extracting investment ranking data")
         self.extract_investment_ranking_data()
         if verbose: print("Calculating technical indicators")
         self.calculate_technical_indicators()
+        if verbose: print("Calculating cheat values")
+        self.calculate_cheat_values()
 
+    def extract_and_calculate_all(self, verbose=True):
+        self.extract_and_calculate_basic()
+        if verbose: print("Extracting news data")
+        self.extract_news_data(investing=False)
+        if verbose: print("Calculating news sentiment")
+        self.calculate_news_sentiment()
+    
     # Other Methods
     def save_as_excel(self):
         self.df.to_excel(f"{self.code}.xlsx")
@@ -837,9 +837,8 @@ class Stock:
             print(f"Failed to convert '{string_date}'")
 
     @staticmethod
-    def get_google_news_driver():
+    def get_google_news_driver(headless=False):
         # Setup webdriver
-        headless = False
         options = webdriver.ChromeOptions()
         if headless: options.add_argument('headless')
         options.add_argument('window-size=1200x600')
