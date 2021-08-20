@@ -605,6 +605,7 @@ class Stock:
             earliest_year = self.df.loc[0,'date'].year
             latest_year = self.df.loc[len(self.df) - 1,'date'].year
             for y in range(earliest_year, latest_year + 1):
+                if str(y) == "2018": time.sleep(60 * 7) # Mid extraction throttle
                 from_date = f"01/01/{y}"
                 to_date = f"12/31/{y}"
                 _change_date_range(driver, from_date, to_date)

@@ -42,17 +42,18 @@ def snp_stocks_basic():
         print(s.code)
 
 def snp_stocks_full():
-    throttle = 60 * 10
+    throttle = 60 * 7
     driver = Stock.get_google_news_driver(headless=False)
-    for i in range(4, len(SNP_500_TOP_100)):
+    for i in range(39, len(SNP_500_TOP_100)):
         s = Stock(*SNP_500_TOP_100[i], driver=driver)
+        # s = Stock(*SNP_500_TOP_100[i])
         s.extract_and_calculate_all(verbose=False)
         save_stock(s, "data/snp_stocks_full")
         print(s.code)
         time.sleep(throttle)
 
 def experiment_1():
-    experiment_values = [(0.001, 0.99), (0.001, 0.9), (0.001, 0.7), (0.001, 0), (0.0005, 0), (0.005, 0), (0.01, 0)]
+    experiment_values = [(0.001, 0.99), (0.001, 0.9), (0.001, 0.7), (0.001, 0), (0.0001, 0), (0.0005, 0), (0.005, 0), (0.01, 0)]
     repeats = 10
     total_training_steps = 100_000
     attributes = ['cheats']
@@ -88,8 +89,8 @@ def experiment_1():
         testing_results.to_excel(path + f"{alpha}_{gamma}_testing.xlsx")
 
 if __name__ == "__main__":
-    # snp_stocks_full()
-    experiment_1()
+    snp_stocks_full()
+    # experiment_1()
 
 # OLD FUNCTIONS
 

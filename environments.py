@@ -21,8 +21,6 @@ YEAR_RANGES = [(59 + (year_index*ANNUAL_TRADING_DAYS), 59 + ((year_index+1)*ANNU
 TRAINING_YEARS = YEAR_RANGES[:5]
 TESTING_YEARS = YEAR_RANGES[5:]
 
-STOCKS = retrieve_stocks_from_folder("data/old_saved_stocks_technical_only")
-
 class PortfolioAllocationEnvironment(gym.Env):
     
     def __init__(self, stocks, state_attributes):
@@ -90,7 +88,8 @@ class PortfolioAllocationEnvironment(gym.Env):
         # numerator = np.exp(actions)
         # denominator = np.sum(np.exp(actions))
         # softmax_output = numerator / denominator
-        return np.exp(actions) /np.sum(np.exp(actions))
+        a = actions.astype('float64')
+        return np.exp(actions) /np.sum(np.exp(a))
     
     @staticmethod
     def check_arguments_valid(stocks, state_attributes):
