@@ -88,9 +88,58 @@ def experiment_1():
         training_results.to_excel(path + f"{alpha}_{gamma}_training.xlsx")
         testing_results.to_excel(path + f"{alpha}_{gamma}_testing.xlsx")
 
+def experiment_2():
+    test_attributes = [
+        ['macd', 'signal_line', 'normalized_rsi', 'std_devs_out', 'relative_vol'],
+        ['ranking_change_score'],
+        ['macd', 'signal_line', 'normalized_rsi', 'std_devs_out', 'relative_vol', 'ranking_change_score'],
+        ['macd'],
+        ['signal_line'],
+        ['normalized_rsi'],
+        ['std_devs_out'],
+        ['relative_vol'],
+    ]
+    repeats = 10
+    total_training_steps = 150_000
+    alpha = 0.0005
+    gamma = 0
+    stocks = retrieve_stocks_from_folder("data/snp_stocks_basic")
+
+    train_dfs = [s.df.loc[100:1000] for s in stocks[:]]
+    train_episodes = total_training_steps // (len(train_dfs[0]) - 1)
+    test_dfs = [s.df.loc[1000:] for s in stocks[:]]
+    for attributes in test_attributes:
+        print(f"Attributes = {attributes}")
+        training_results = pd.DataFrame({"Episode": [(i + 1) for i in range(train_episodes)]})
+        testing_results = pd.DataFrame({"Episode": [1]})
+        for i in range(repeats):
+            print(f"Repeat {i + 1}")
+            train_env = PortfolioAllocationEnvironment(train_dfs, attributes)
+            train_env.reset()
+            model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=alpha, gamma=gamma)
+            model.learn(total_timesteps=total_training_steps)
+
+            training_results[i + 1] = train_env.final_values
+
+            test_env = PortfolioAllocationEnvironment(test_dfs, attributes)
+            obs = test_env.reset()
+            while True:
+                action, _state = model.predict(obs, deterministic=True)
+                obs, reward, done, info = test_env.step(action)
+                if done:
+                    break
+
+            testing_results[i + 1] = [test_env.portfolio_value]
+        
+        path = f"data/results/experiment_2/"
+        seperator = "-"        
+        training_results.to_excel(path + f"{seperator.join(attributes)}_training.xlsx")
+        testing_results.to_excel(path + f"{seperator.join(attributes)}_testing.xlsx")
+
 if __name__ == "__main__":
-    snp_stocks_full()
+    # snp_stocks_full()
     # experiment_1()
+    experiment_2()
 
 # OLD FUNCTIONS
 
