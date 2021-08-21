@@ -624,11 +624,14 @@ class Stock:
                             article = dict()
                             article['title'] = a_div.find('div', role="heading").text
                             article['link'] = a_div.find('a')['href']
-                            date = self._iso_to_datetime(_convert_google_date(a_div.find('span', class_="WG9SHc").text))
-                            if date in articles_dict:
-                                articles_dict[date].append(article)
-                            else:
-                                articles_dict[date] = [article]
+                            try:
+                                date = self._iso_to_datetime(_convert_google_date(a_div.find('span', class_="WG9SHc").text))
+                                if date in articles_dict:
+                                    articles_dict[date].append(article)
+                                else:
+                                    articles_dict[date] = [article]
+                            except KeyError:
+                                pass
 
                     # Move to next page
                     WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//*[@id="pnnext"]')))

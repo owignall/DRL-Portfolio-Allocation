@@ -44,7 +44,7 @@ def snp_stocks_basic():
 def snp_stocks_full():
     throttle = 60 * 7
     driver = Stock.get_google_news_driver(headless=False)
-    for i in range(39, len(SNP_500_TOP_100)):
+    for i in range(53, len(SNP_500_TOP_100)):
         s = Stock(*SNP_500_TOP_100[i], driver=driver)
         # s = Stock(*SNP_500_TOP_100[i])
         s.extract_and_calculate_all(verbose=False)
@@ -99,6 +99,13 @@ def experiment_2():
         ['std_devs_out'],
         ['relative_vol'],
     ]
+
+    test_attributes = [
+        ['ranking_score'],
+        ['macd', 'signal_line', 'normalized_rsi', 'std_devs_out', 'relative_vol', 'ranking_score'],
+        ['macd', 'signal_line', 'normalized_rsi', 'std_devs_out', 'relative_vol', 'ranking_change_score', 'ranking_score']
+    ]
+
     repeats = 10
     total_training_steps = 150_000
     alpha = 0.0005
