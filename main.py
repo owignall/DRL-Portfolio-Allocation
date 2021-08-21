@@ -97,10 +97,10 @@ def experiment_2():
         ['signal_line'],
         ['normalized_rsi'],
         ['std_devs_out'],
-        ['relative_vol'],
     ]
 
     test_attributes = [
+        ['relative_vol'],
         ['ranking_score'],
         ['macd', 'signal_line', 'normalized_rsi', 'std_devs_out', 'relative_vol', 'ranking_score'],
         ['macd', 'signal_line', 'normalized_rsi', 'std_devs_out', 'relative_vol', 'ranking_change_score', 'ranking_score']
