@@ -44,7 +44,7 @@ def snp_stocks_basic():
 def snp_stocks_full():
     throttle = 60 * 7
     driver = Stock.get_google_news_driver(headless=False)
-    for i in range(53, len(SNP_500_TOP_100)):
+    for i in range(86, len(SNP_500_TOP_100)):
         s = Stock(*SNP_500_TOP_100[i], driver=driver)
         # s = Stock(*SNP_500_TOP_100[i])
         s.extract_and_calculate_all(verbose=False)
@@ -143,10 +143,86 @@ def experiment_2():
         training_results.to_excel(path + f"{seperator.join(attributes)}_training.xlsx")
         testing_results.to_excel(path + f"{seperator.join(attributes)}_testing.xlsx")
 
+def figs(experiment_name, folder):
+    training_dict = {}
+    testing_dict = {}
+    for file in listdir(folder):
+        if file == ".gitignore":
+            continue
+        file_name = file[:-5]
+        components = file_name.split("_")
+        period = components[-1]
+        name = "_".join(components[:-1])
+        file_path = f"{folder}/{file}"
+        df = pd.read_excel(file_path, index_col=0)
+        if period == "training":
+            training_dict[name] = df
+        elif period == "testing":
+            testing_dict[name] = df
+        else:
+            raise ValueError("Neither training or testing")
+
+    # Plot training
+    for name in training_dict:
+        # Calculate Averages
+        df = training_dict[name]
+        averages = []
+        for y in range(len(df)):
+            values = [df[x][y] for x in range(1,len(df.columns))]
+            average = sum(values) / len(values)
+            averages.append(average)
+        # Plot Averages
+        plt.plot(averages, label=name)
+    title = f"{experiment_name} Training"
+    plt.title(title)
+    plt.xlabel("Episodes")
+    plt.ylabel("Final value")
+    plt.yscale('log')
+    plt.legend()
+    plt.savefig(f"data/figs/{title}")
+    plt.clf()
+
+    # Plot testing
+    average_final_values = []
+    errs = []
+    low_errs = []
+    high_errs = []
+    names = []
+    for name in testing_dict:
+        df = testing_dict[name]
+        values = [df[x][0] for x in range(1,len(df.columns))]
+        
+        average = sum(values) / len(values)
+        average_final_values.append(average)
+        err = np.std(values) / math.sqrt(len(values))
+        errs.append(err)
+        # low_errs.append(math.exp((math.log10(average) - (0.434 * (err / average)))))
+        # high_errs.append(math.exp((math.log10(average) + (0.434 * (err / average)))))
+        # low_errs.append(average - (0.434 * (err / average)))
+        # high_errs.append(average + (0.434 * (err / average)))
+        # low_errs.append(abs(average - (average / (1 + (err / average)))))
+        # high_errs.append(abs(average - (average * (1 + (err / average)))))
+        
+        low_errs.append(err)
+        high_errs.append(err)
+        names.append(name)
+    title = f"{experiment_name} Testing"
+    plt.title(title)
+    plt.xlabel("Final value")
+    plt.xscale('log')
+    # plt.ylabel("Final value")
+    plt.barh(names, average_final_values, xerr=[low_errs, high_errs], ec="black", capsize=5)
+    plt.savefig(f"data/figs/{title}")
+
+    
+    
+
 if __name__ == "__main__":
-    # snp_stocks_full()
+    snp_stocks_full()
     # experiment_1()
-    experiment_2()
+    # # experiment_2()
+    # figs("E1_1", "data/results/e_1_1")
+    # figs("E1", "data/results/experiment_1")
 
 # OLD FUNCTIONS
 
