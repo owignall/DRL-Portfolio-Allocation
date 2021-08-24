@@ -773,23 +773,7 @@ class Stock:
                     for a in self.df.loc[i, source]:
                         a['hugging_face'] = classifier(a['title'])[0]
                         if verbose: print(a['hugging_face'])
-            
-            if text_blob:
-                if verbose: print("Text blob")
-                for i in range(len(self.df)):
-                    for a in self.df.loc[i, source]:
-                        title_sentiment = TextBlob(a['title']).sentiment
-                        a['text_blob'] = {"polarity": title_sentiment.polarity, "subjectivity": title_sentiment.subjectivity}
-
-            if vader:
-                if verbose: print("Vader")
-                analyzer = SentimentIntensityAnalyzer()
-                for i in range(len(self.df)):
-                    for a in self.df.loc[i, source]:
-                        a['vader'] = analyzer.polarity_scores(a['title'])
-        
-            # Hugging face scores
-            if hugging_face:
+                
                 if verbose: print("Calculating Hugging face scores")
                 previous = 0
                 scores = []
@@ -801,8 +785,63 @@ class Stock:
                         score = (self.ss_decay * previous)
                     scores.append(score)
                     previous = score
+                self.df[f'hf_{source}_score'] = scores
+            
+            if text_blob:
+                if verbose: print("Text blob")
+                for i in range(len(self.df)):
+                    for a in self.df.loc[i, source]:
+                        title_sentiment = TextBlob(a['title']).sentiment
+                        a['text_blob'] = {"polarity": title_sentiment.polarity, "subjectivity": title_sentiment.subjectivity}
+                
+                if verbose: print("Calculating Text blob scores")
+                previous = 0
+                scores = []
+                for i in range(len(self.df)):
+                    if len(self.df.loc[i, source]) > 0:
+                        values = [a['text_blob']['polarity'] for a in self.df.loc[i, source]]
+                        score = (self.ss_decay * previous) + sum(values)
+                    else:
+                        score = (self.ss_decay * previous)
+                    scores.append(score)
+                    previous = score
+                self.df[f'tb_{source}_score'] = scores
+
+            if vader:
+                if verbose: print("Vader")
+                analyzer = SentimentIntensityAnalyzer()
+                for i in range(len(self.df)):
+                    for a in self.df.loc[i, source]:
+                        a['vader'] = analyzer.polarity_scores(a['title'])
+                
+                if verbose: print("Calculating Vader scores")
+                previous = 0
+                scores = []
+                for i in range(len(self.df)):
+                    if len(self.df.loc[i, source]) > 0:
+                        values = [a['vader']['compound'] for a in self.df.loc[i, source]]
+                        score = (self.ss_decay * previous) + sum(values)
+                    else:
+                        score = (self.ss_decay * previous)
+                    scores.append(score)
+                    previous = score
+                self.df[f'vader_{source}_score'] = scores
         
-            self.df[f'hf_{source}_score'] = scores
+            # Hugging face scores
+            # if hugging_face:
+            #     if verbose: print("Calculating Hugging face scores")
+            #     previous = 0
+            #     scores = []
+            #     for i in range(len(self.df)):
+            #         if len(self.df.loc[i, source]) > 0:
+            #             values = [HF_LABEL_VALUES[a['hugging_face']['label']] for a in self.df.loc[i, source]]
+            #             score = (self.ss_decay * previous) + sum(values)
+            #         else:
+            #             score = (self.ss_decay * previous)
+            #         scores.append(score)
+            #         previous = score
+        
+            # self.df[f'hf_{source}_score'] = scores
 
         # COULD ADD ENSEMBLE OF SCORES
 
@@ -865,6 +904,14 @@ class Stock:
         return driver
 
 if __name__ == "__main__":
+    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full")
+    print(stocks[0].df.columns)
+    # for s in stocks:
+    #     s.calculate_news_sentiment(hugging_face=False, text_blob=True, vader=True)
+    #     save_stock(s, "data/snp_50_stocks_full_updated")
+
+    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full_updated")
+    print(stocks[0].df.columns)
     # stocks = [Stock(*sa) for sa in SNP_500_TOP_100]
 
     # driver = Stock.get_google_news_driver()
@@ -874,11 +921,11 @@ if __name__ == "__main__":
     # s1 = Stock("Apple", "AAPL", "apple-computer-inc", driver=driver)
     # s2 = Stock('Cisco', 'CSCO', 'cisco-sys-inc', driver=driver)
     # s = Stock('General Electric', 'GE', 'general-electric')
-    s1 = Stock(*SNP_500_TOP_100[0])
-    print(s1.name)
-    s1.extract_and_calculate_basic()
-    s1.calculate_cheat_values()
-    print(s1.df)
+    # s1 = Stock(*SNP_500_TOP_100[0])
+    # print(s1.name)
+    # s1.extract_and_calculate_basic()
+    # s1.calculate_cheat_values()
+    # print(s1.df)
     # s1.extract_investment_ranking_data()
     # s2 = Stock(code="XOM", name="XOM", ic_name=None)
     # print(s2.name)

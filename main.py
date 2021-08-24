@@ -52,64 +52,10 @@ def snp_stocks_full():
         print(s.code)
         time.sleep(throttle)
 
-def experiment_1():
-    experiment_values = [
-        (0.001, 0.99), (0.001, 0.9), (0.001, 0.7), (0.001, 0), (0.0001, 0), 
-        (0.0005, 0), (0.005, 0), (0.01, 0), (0.0003, 0), (0.0004, 0), (0.0006, 0), (0.0007, 0)
-    ]
-    experiment_values = [] # TEMP
-    repeats = 10
-    total_training_steps = 100_000
-    attributes = ['cheats']
-    stocks = retrieve_stocks_from_folder("data/snp_stocks_basic")
-    train_dfs = [s.df.loc[:1000] for s in stocks[:]]
-    train_episodes = total_training_steps // (len(train_dfs[0]) - 1)
-    test_dfs = [s.df.loc[1000:] for s in stocks[:]]
-
-    # Testing Baseline
-    testing_results = pd.DataFrame({"Episode": [1]})
-    for i in range(repeats):
-        train_env = PortfolioAllocationEnvironment(train_dfs, attributes)
-        model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=0.001, gamma=0)
-        test_env = PortfolioAllocationEnvironment(test_dfs, attributes)
-        obs = test_env.reset()
-        while True:
-            action, _state = model.predict(obs, deterministic=True)
-            obs, reward, done, info = test_env.step(action)
-            if done:
-                break
-        testing_results[i + 1] = [test_env.portfolio_value]
-    path = f"data/results/experiment_1_raw/"       
-    testing_results.to_excel(path + f"untrained_testing.xlsx")
-
-    for alpha, gamma in experiment_values:
-        print(f"Alpha = {alpha}, Gamma = {gamma}")
-        training_results = pd.DataFrame({"Episode": [(i + 1) for i in range(train_episodes)]})
-        testing_results = pd.DataFrame({"Episode": [1]})
-        for i in range(repeats):
-            print(f"Repeat {i + 1}")
-            train_env = PortfolioAllocationEnvironment(train_dfs, attributes)
-            train_env.reset()
-            model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=alpha, gamma=gamma)
-            model.learn(total_timesteps=total_training_steps)
-
-            training_results[i + 1] = train_env.final_values
-
-            test_env = PortfolioAllocationEnvironment(test_dfs, attributes)
-            obs = test_env.reset()
-            while True:
-                action, _state = model.predict(obs, deterministic=True)
-                obs, reward, done, info = test_env.step(action)
-                if done:
-                    break
-
-            testing_results[i + 1] = [test_env.portfolio_value]
-        
-        path = f"data/results/experiment_1_raw/"            
-        training_results.to_excel(path + f"{alpha}_{gamma}_training.xlsx")
-        testing_results.to_excel(path + f"{alpha}_{gamma}_testing.xlsx")
+# Old experiments
 
 def experiment_2():
+    path = "data/results/experiment_2_raw/"
     test_attributes = [
         ['macd', 'signal_line', 'normalized_rsi', 'std_devs_out', 'relative_vol'],
         ['ranking_change_score'],
@@ -151,7 +97,6 @@ def experiment_2():
             if done:
                 break
         testing_results[i + 1] = [test_env.portfolio_value]
-    path = f"data/results/experiment_2_raw/"
     testing_results.to_excel(path + f"untrained_testing.xlsx")
 
     # Agents
@@ -178,12 +123,12 @@ def experiment_2():
 
             testing_results[i + 1] = [test_env.portfolio_value]
         
-        path = f"data/results/experiment_2_raw/"
         seperator = "-"        
         training_results.to_excel(path + f"{seperator.join(attributes)}_training.xlsx")
         testing_results.to_excel(path + f"{seperator.join(attributes)}_testing.xlsx")
 
 def experiment_3():
+    path = "data/results/experiment_3_raw/"
     test_attributes = [
         ['hf_google_articles_score'],
         ['ranking_change_score', 'ranking_score', 'hf_google_articles_score'],
@@ -214,7 +159,6 @@ def experiment_3():
             if done:
                 break
         testing_results[i + 1] = [test_env.portfolio_value]
-    path = f"data/results/experiment_3_raw/"
     testing_results.to_excel(path + f"untrained_testing.xlsx")
         
 
@@ -242,12 +186,197 @@ def experiment_3():
 
             testing_results[i + 1] = [test_env.portfolio_value]
         
-        path = f"data/results/experiment_3/"
         seperator = "-"        
         training_results.to_excel(path + f"{seperator.join(attributes)}_training.xlsx")
         testing_results.to_excel(path + f"{seperator.join(attributes)}_testing.xlsx")
 
-def figs(experiment_name, folder):
+# Experiments
+
+def e1_parameter_search():
+    path = f"data/results/raw_parameter_search/"  
+    experiment_values = [
+        (0.001, 0.99), (0.001, 0.9), (0.001, 0.7), (0.001, 0), (0.0001, 0), 
+        (0.0005, 0), (0.005, 0), (0.01, 0), (0.0003, 0), (0.0004, 0), (0.0006, 0), (0.0007, 0)
+    ]
+    experiment_values = [] # TEMP
+    repeats = 10
+    total_training_steps = 100_000
+    attributes = ['cheats']
+    stocks = retrieve_stocks_from_folder("data/snp_stocks_basic")
+    train_dfs = [s.df.loc[:1000] for s in stocks[:]]
+    train_episodes = total_training_steps // (len(train_dfs[0]) - 1)
+    test_dfs = [s.df.loc[1000:] for s in stocks[:]]
+
+    # Testing Baseline
+    testing_results = pd.DataFrame({"Episode": [1]})
+    for i in range(repeats):
+        train_env = PortfolioAllocationEnvironment(train_dfs, attributes)
+        model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=0.001, gamma=0)
+        test_env = PortfolioAllocationEnvironment(test_dfs, attributes)
+        obs = test_env.reset()
+        while True:
+            action, _state = model.predict(obs, deterministic=True)
+            obs, reward, done, info = test_env.step(action)
+            if done:
+                break
+        testing_results[i + 1] = [test_env.portfolio_value]
+    testing_results.to_excel(path + f"untrained_testing.xlsx")
+
+    for alpha, gamma in experiment_values:
+        print(f"Alpha = {alpha}, Gamma = {gamma}")
+        training_results = pd.DataFrame({"Episode": [(i + 1) for i in range(train_episodes)]})
+        testing_results = pd.DataFrame({"Episode": [1]})
+        for i in range(repeats):
+            print(f"Repeat {i + 1}")
+            train_env = PortfolioAllocationEnvironment(train_dfs, attributes)
+            train_env.reset()
+            model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=alpha, gamma=gamma)
+            model.learn(total_timesteps=total_training_steps)
+
+            training_results[i + 1] = train_env.final_values
+
+            test_env = PortfolioAllocationEnvironment(test_dfs, attributes)
+            obs = test_env.reset()
+            while True:
+                action, _state = model.predict(obs, deterministic=True)
+                obs, reward, done, info = test_env.step(action)
+                if done:
+                    break
+
+            testing_results[i + 1] = [test_env.portfolio_value]
+                  
+        training_results.to_excel(path + f"{alpha}_{gamma}_training.xlsx")
+        testing_results.to_excel(path + f"{alpha}_{gamma}_testing.xlsx")
+
+def e2_technical_indicators():
+    path = "data/results/raw_technical_indicators/"
+    test_attributes = [
+        ['macd'],
+        ['signal_line'],
+        ['normalized_rsi'],
+        ['std_devs_out'],
+        ['relative_vol']
+    ]
+
+    repeats = 10
+    total_training_steps = 150_000
+    alpha = 0.0005
+    gamma = 0
+    stocks = retrieve_stocks_from_folder("data/snp_stocks_basic")
+
+    train_dfs = [s.df.loc[100:1000] for s in stocks[:]]
+    train_episodes = total_training_steps // (len(train_dfs[0]) - 1)
+    test_dfs = [s.df.loc[1000:] for s in stocks[:]]
+
+    # Test Baseline
+    testing_results = pd.DataFrame({"Episode": [1]})
+    for i in range(repeats):
+        train_env = PortfolioAllocationEnvironment(train_dfs, ['macd'])
+        model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=alpha, gamma=gamma)
+        test_env = PortfolioAllocationEnvironment(test_dfs, ['macd'])
+        obs = test_env.reset()
+        while True:
+            action, _state = model.predict(obs, deterministic=True)
+            obs, reward, done, info = test_env.step(action)
+            if done:
+                break
+        testing_results[i + 1] = [test_env.portfolio_value]
+    testing_results.to_excel(path + f"untrained_testing.xlsx")
+
+    # Agents
+    for attributes in test_attributes:
+        print(f"Attributes = {attributes}")
+        training_results = pd.DataFrame({"Episode": [(i + 1) for i in range(train_episodes)]})
+        testing_results = pd.DataFrame({"Episode": [1]})
+        for i in range(repeats):
+            print(f"Repeat {i + 1}")
+            train_env = PortfolioAllocationEnvironment(train_dfs, attributes)
+            train_env.reset()
+            model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=alpha, gamma=gamma)
+            model.learn(total_timesteps=total_training_steps)
+
+            training_results[i + 1] = train_env.final_values
+
+            test_env = PortfolioAllocationEnvironment(test_dfs, attributes)
+            obs = test_env.reset()
+            while True:
+                action, _state = model.predict(obs, deterministic=True)
+                obs, reward, done, info = test_env.step(action)
+                if done:
+                    break
+
+            testing_results[i + 1] = [test_env.portfolio_value]
+        
+        seperator = "-"        
+        training_results.to_excel(path + f"{seperator.join(attributes)}_training.xlsx")
+        testing_results.to_excel(path + f"{seperator.join(attributes)}_testing.xlsx")
+
+def e3_sentiment_features():
+    path = "data/results/raw_sentiment_features/"
+    test_attributes = [
+        ['hf_google_articles_score'],
+        ['ranking_change_score'], 
+        ['ranking_score'],
+        ['tb_google_articles_score'], 
+        ['vader_google_articles_score']
+    ]
+    repeats = 10
+    total_training_steps = 150_000
+    alpha = 0.0005
+    gamma = 0
+    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full_updated")
+
+    train_dfs = [s.df.loc[100:1000] for s in stocks[:]]
+    train_episodes = total_training_steps // (len(train_dfs[0]) - 1)
+    test_dfs = [s.df.loc[1000:] for s in stocks[:]]
+
+    # Test Baseline
+    testing_results = pd.DataFrame({"Episode": [1]})
+    for i in range(repeats):
+        train_env = PortfolioAllocationEnvironment(train_dfs, ['macd'])
+        model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=alpha, gamma=gamma)
+        test_env = PortfolioAllocationEnvironment(test_dfs, ['macd'])
+        obs = test_env.reset()
+        while True:
+            action, _state = model.predict(obs, deterministic=True)
+            obs, reward, done, info = test_env.step(action)
+            if done:
+                break
+        testing_results[i + 1] = [test_env.portfolio_value]
+    testing_results.to_excel(path + f"untrained_testing.xlsx")
+        
+
+    # Agents
+    for attributes in test_attributes:
+        print(f"Attributes = {attributes}")
+        training_results = pd.DataFrame({"Episode": [(i + 1) for i in range(train_episodes)]})
+        testing_results = pd.DataFrame({"Episode": [1]})
+        for i in range(repeats):
+            print(f"Repeat {i + 1}")
+            train_env = PortfolioAllocationEnvironment(train_dfs, attributes)
+            train_env.reset()
+            model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=alpha, gamma=gamma)
+            model.learn(total_timesteps=total_training_steps)
+
+            training_results[i + 1] = train_env.final_values
+
+            test_env = PortfolioAllocationEnvironment(test_dfs, attributes)
+            obs = test_env.reset()
+            while True:
+                action, _state = model.predict(obs, deterministic=True)
+                obs, reward, done, info = test_env.step(action)
+                if done:
+                    break
+
+            testing_results[i + 1] = [test_env.portfolio_value]
+        
+        seperator = "-"        
+        training_results.to_excel(path + f"{seperator.join(attributes)}_training.xlsx")
+        testing_results.to_excel(path + f"{seperator.join(attributes)}_testing.xlsx")
+
+
+def figs(experiment_name, name_of_independent, folder, log_scale=True):
+    
     training_dict = {}
     testing_dict = {}
     for file in listdir(folder):
@@ -278,11 +407,12 @@ def figs(experiment_name, folder):
         # Plot Averages
         plt.plot(averages, label=name)
     title = f"{experiment_name} Training"
-    plt.title(title)
+    # plt.title(title)
     plt.xlabel("Episodes")
-    plt.ylabel("Final value")
-    plt.yscale('log')
+    plt.ylabel("Average Final Value")
+    if log_scale: plt.yscale('log')
     plt.legend()
+    plt.tight_layout()
     plt.savefig(f"data/figs/{title}")
     plt.clf()
 
@@ -311,11 +441,12 @@ def figs(experiment_name, folder):
         high_errs.append(err)
         names.append(name)
     title = f"{experiment_name} Testing"
-    plt.title(title)
-    plt.xlabel("Final value")
-    plt.xscale('log')
-    # plt.ylabel("Final value")
+    # plt.title(title)
+    if log_scale: plt.xscale('log')
     plt.barh(names, average_final_values, xerr=[low_errs, high_errs], ec="black", capsize=5)
+    plt.xlabel("Average Final Value")
+    plt.ylabel(name_of_independent)
+    plt.tight_layout()
     plt.savefig(f"data/figs/{title}")
     plt.clf()
 
@@ -328,9 +459,11 @@ if __name__ == "__main__":
     # experiment_1()
     # experiment_2()
     # experiment_3()
-    # figs("Learning Rate Narrow Search", "data/results/learning_rate_narrow_search")
-    # figs("Learning Rate Broad Search", "data/results/learning_rate_broad_search")
-    figs("E3 Raw", "data/results/experiment_3_raw")
+    e3_sentiment_features()
+    # figs("Learning Rate Narrow Search", "Learning Rate", "data/results/learning_rate_narrow_search")
+    # figs("Learning Rate Broad Search", "Learning Rate", "data/results/learning_rate_broad_search")
+    # figs("Gamma Broad Search", "Gamma", "data/results/gamma_broad_search")
+    # figs("Technical Indicators Comparison", "Indicator", "data/results/technical_indicators", log_scale=False)
 
 
     # stocks = retrieve_stocks_from_folder("data/snp_stocks_full")
