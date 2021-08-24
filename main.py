@@ -315,10 +315,10 @@ def e3_sentiment_features():
     path = "data/results/raw_sentiment_features/"
     test_attributes = [
         ['hf_google_articles_score'],
-        ['ranking_change_score'], 
-        ['ranking_score'],
         ['tb_google_articles_score'], 
-        ['vader_google_articles_score']
+        ['vader_google_articles_score'],
+        ['ranking_change_score'], 
+        ['ranking_score']
     ]
     repeats = 10
     total_training_steps = 150_000
