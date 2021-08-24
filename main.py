@@ -284,6 +284,7 @@ def figs(experiment_name, folder):
     
 
 if __name__ == "__main__":
+    # Minor change to test push
     snp_stocks_full()
     # experiment_1()
     # # experiment_2()
