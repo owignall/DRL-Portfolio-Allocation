@@ -1,5 +1,5 @@
 *.png
-*.xlsx
+# *.xlsx
 *.pyc
 __pycache__/*
 
