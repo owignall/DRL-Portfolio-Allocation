@@ -378,7 +378,7 @@ def e3_sentiment_features():
         testing_results.to_excel(path + f"{seperator.join(attributes)}_testing.xlsx")
 
 
-def figs(experiment_name, name_of_independent, folder, log_scale=True):
+def plots_and_stats(experiment_name, name_of_independent, folder, log_scale=True):
     
     training_dict = {}
     testing_dict = {}
@@ -405,21 +405,23 @@ def figs(experiment_name, name_of_independent, folder, log_scale=True):
         averages = []
         for y in range(len(df)):
             values = [df[x][y] for x in range(1,len(df.columns))]
-            average = sum(values) / len(values)
+            returns = [(v / 1_000_000) - 1 for v in values]
+            average = sum(returns) / len(returns)
             averages.append(average)
         # Plot Averages
         plt.plot(averages, label=name)
     title = f"{experiment_name} Training"
     # plt.title(title)
     plt.xlabel("Episodes")
-    plt.ylabel("Average Final Value")
+    plt.ylabel("Average Return")
     if log_scale: plt.yscale('log')
     plt.legend()
     plt.tight_layout()
-    plt.savefig(f"data/figs/{title}")
+    plt.savefig(f"data/plots/{title}")
     plt.clf()
 
     # Plot testing
+    testing_stats = pd.DataFrame({"Agent": ["Average Return", "Std Devs", "Sample Size", "Sample mean std devs"]})
     average_final_values = []
     errs = []
     low_errs = []
@@ -428,30 +430,27 @@ def figs(experiment_name, name_of_independent, folder, log_scale=True):
     for name in testing_dict:
         df = testing_dict[name]
         values = [df[x][0] for x in range(1,len(df.columns))]
-        
-        average = sum(values) / len(values)
+        returns = [(v / 1_000_000) - 1 for v in values]
+        average = sum(returns) / len(returns)
         average_final_values.append(average)
-        err = np.std(values) / math.sqrt(len(values))
+        std_dev = np.std(returns)
+        err = std_dev / math.sqrt(len(returns))
         errs.append(err)
-        # low_errs.append(math.exp((math.log10(average) - (0.434 * (err / average)))))
-        # high_errs.append(math.exp((math.log10(average) + (0.434 * (err / average)))))
-        # low_errs.append(average - (0.434 * (err / average)))
-        # high_errs.append(average + (0.434 * (err / average)))
-        # low_errs.append(abs(average - (average / (1 + (err / average)))))
-        # high_errs.append(abs(average - (average * (1 + (err / average)))))
         
         low_errs.append(err)
         high_errs.append(err)
         names.append(name)
+        testing_stats[name] = [average, std_dev, len(returns), err]
     title = f"{experiment_name} Testing"
     # plt.title(title)
     if log_scale: plt.xscale('log')
     plt.barh(names, average_final_values, xerr=[low_errs, high_errs], ec="black", capsize=5)
-    plt.xlabel("Average Final Value")
+    plt.xlabel("Average Return")
     plt.ylabel(name_of_independent)
     plt.tight_layout()
-    plt.savefig(f"data/figs/{title}")
+    plt.savefig(f"data/plots/{title}")
     plt.clf()
+    testing_stats.to_excel(f"data/testing_stats/{experiment_name}.xlsx")
 
     
     
@@ -462,11 +461,12 @@ if __name__ == "__main__":
     # experiment_1()
     # experiment_2()
     # experiment_3()
-    e3_sentiment_features()
-    # figs("Learning Rate Narrow Search", "Learning Rate", "data/results/learning_rate_narrow_search")
-    # figs("Learning Rate Broad Search", "Learning Rate", "data/results/learning_rate_broad_search")
-    # figs("Gamma Broad Search", "Gamma", "data/results/gamma_broad_search")
-    # figs("Technical Indicators Comparison", "Indicator", "data/results/technical_indicators", log_scale=False)
+    # e3_sentiment_features()
+    plots_and_stats("Learning Rate Narrow Search", "Learning Rate", "data/results/learning_rate_narrow_search")
+    plots_and_stats("Learning Rate Broad Search", "Learning Rate", "data/results/learning_rate_broad_search")
+    plots_and_stats("Gamma Broad Search", "Gamma", "data/results/gamma_broad_search")
+    plots_and_stats("Technical Indicators Comparison", "Indicator", "data/results/technical_indicators", log_scale=False)
+    # plots_and_stats("Raw sent", "Feature", "data/results/raw_sentiment_features", log_scale=False)
 
 
     # stocks = retrieve_stocks_from_folder("data/snp_stocks_full")
