@@ -320,6 +320,9 @@ def e3_sentiment_features():
         ['ranking_change_score'], 
         ['ranking_score']
     ]
+    test_attributes = [
+        ['hf_google_articles_score', 'tb_google_articles_score', 'vader_google_articles_score', 'ranking_change_score', 'ranking_score']
+    ]
     repeats = 10
     total_training_steps = 150_000
     alpha = 0.0005
