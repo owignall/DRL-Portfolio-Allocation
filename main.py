@@ -457,7 +457,7 @@ def e4_2_combined_features_refined():
     test_dfs = [s.df.loc[1000:] for s in stocks[:]]
 
     # Test Baseline
-    testing_results = pd.DataFrame({"Episode": [1]})
+    testing_results = pd.DataFrame({"Values": ["Final Value", "Annualized Return", "Sharpe Ratio"]})
     for i in range(repeats):
         train_env = PortfolioAllocationEnvironment(train_dfs, ['macd'])
         model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=alpha, gamma=gamma)
@@ -468,14 +468,14 @@ def e4_2_combined_features_refined():
             obs, reward, done, info = test_env.step(action)
             if done:
                 break
-        testing_results[i + 1] = [test_env.portfolio_value]
+        testing_results[i + 1] = [test_env.portfolio_value, test_env.annualized_return, test_env.sharpe_ratio]
     testing_results.to_excel(path + f"untrained_testing.xlsx")
         
     # Agents
     for attributes in test_attributes:
         print(f"Attributes = {attributes}")
         training_results = pd.DataFrame({"Episode": [(i + 1) for i in range(train_episodes)]})
-        testing_results = pd.DataFrame({"Episode": [1]})
+        testing_results = pd.DataFrame({"Values": ["Final Value", "Annualized Return", "Sharpe Ratio"]})
         for i in range(repeats):
             print(f"Repeat {i + 1}")
             train_env = PortfolioAllocationEnvironment(train_dfs, attributes)
@@ -493,7 +493,7 @@ def e4_2_combined_features_refined():
                 if done:
                     break
 
-            testing_results[i + 1] = [test_env.portfolio_value]
+            testing_results[i + 1] = [test_env.portfolio_value, test_env.annualized_return, test_env.sharpe_ratio]
         
         seperator = "-"        
         training_results.to_excel(path + f"{seperator.join(attributes)}_training.xlsx")
@@ -583,14 +583,14 @@ if __name__ == "__main__":
     # experiment_3()
     # e3_sentiment_features()
     # e4_combined_features()
-    # e4_2_combined_features_refined()
+    e4_2_combined_features_refined()
     # plots_and_stats("Learning Rate Narrow Search", "Learning Rate", "data/results/learning_rate_narrow_search")
     # plots_and_stats("Learning Rate Broad Search", "Learning Rate", "data/results/learning_rate_broad_search")
     # plots_and_stats("Gamma Broad Search", "Gamma", "data/results/gamma_broad_search")
     # plots_and_stats("Technical Indicators Comparison", "Indicator", "data/results/technical_indicators", log_scale=False)
     # plots_and_stats("Raw sent", "Feature", "data/results/raw_sentiment_features", log_scale=False)
     # plots_and_stats("Combined Features", "Feature", "data/results/combined_features", log_scale=False)
-    plots_and_stats("Combined Features Refined", "Feature", "data/results/combined_features_refined", log_scale=False)
+    # plots_and_stats("Combined Features Refined", "Feature", "data/results/combined_features_refined", log_scale=False)
 
 
     # stocks = retrieve_stocks_from_folder("data/snp_stocks_full")
