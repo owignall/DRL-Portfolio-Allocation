@@ -35,7 +35,7 @@ class PortfolioAllocationEnvironment(gym.Env):
         self.sharpe_ratios = []
         self.discrete = discrete
 
-        if discrete:
+        if self.discrete:
             self.action_space = spaces.Discrete(len(self.stocks))
         else:
             self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(len(self.stocks),))
@@ -63,7 +63,7 @@ class PortfolioAllocationEnvironment(gym.Env):
         previous_index = self.date_index
         self.date_index += 1
 
-        if discrete:
+        if self.discrete:
             s = self.stocks[action]
             previous_close = s.loc[previous_index, 'close']
             new_close = s.loc[self.date_index, 'close']
