@@ -511,6 +511,7 @@ def e5_model_comparison():
     test_dfs = [s.df.loc[1000:] for s in stocks[:]]
 
     # Agents
+    print("DQN")
     # DQN Untrained
     testing_results = pd.DataFrame({"Values": ["Final Value", "Annualized Return", "Sharpe Ratio"]})
     for i in range(repeats):
@@ -553,6 +554,7 @@ def e5_model_comparison():
     testing_results.to_excel(path + f"DQN_testing.xlsx")
 
     # A2C Untrained
+    print("A2C")
     testing_results = pd.DataFrame({"Values": ["Final Value", "Annualized Return", "Sharpe Ratio"]})
     for i in range(repeats):
         train_env = PortfolioAllocationEnvironment(train_dfs, attributes)
@@ -680,13 +682,14 @@ if __name__ == "__main__":
     # e3_sentiment_features()
     # e4_combined_features()
     # e4_2_combined_features_refined()
+    e5_model_comparison()
     # plots_and_stats("Learning Rate Narrow Search", "Learning Rate", "data/results/learning_rate_narrow_search")
     # plots_and_stats("Learning Rate Broad Search", "Learning Rate", "data/results/learning_rate_broad_search")
     # plots_and_stats("Gamma Broad Search", "Gamma", "data/results/gamma_broad_search")
     # plots_and_stats("Technical Indicators Comparison", "Indicator", "data/results/technical_indicators", log_scale=False)
     # plots_and_stats("Raw sent", "Feature", "data/results/raw_sentiment_features", log_scale=False)
     # plots_and_stats("Combined Features", "Feature", "data/results/combined_features", log_scale=False)
-    plots_and_stats("New Combined Features Refined", "Feature", "data/results/combined_refined_3", log_scale=False)
+    # plots_and_stats("New Combined Features Refined", "Feature", "data/results/combined_refined_3", log_scale=False)
 
 
     # stocks = retrieve_stocks_from_folder("data/snp_stocks_full")
