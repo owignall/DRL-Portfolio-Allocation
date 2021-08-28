@@ -438,7 +438,7 @@ def e4_combined_features():
 
 
 def e4_2_combined_features_refined():
-    path = "data/results/raw_combined_features_refined/"
+    path = "data/results/raw_combined_features_refined_3/"
 
     test_attributes = [
         ['normalized_rsi', 'std_devs_out', 'relative_vol'],
@@ -446,8 +446,8 @@ def e4_2_combined_features_refined():
         ['normalized_rsi', 'std_devs_out', 'relative_vol',
             'hf_google_articles_score', 'vader_google_articles_score', 'ranking_score']
     ]
-    repeats = 10
-    total_training_steps = 200_000
+    repeats = 5
+    total_training_steps = 500_000
     alpha = 0.0005
     gamma = 0
     stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full_updated")
