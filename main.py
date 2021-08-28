@@ -436,7 +436,6 @@ def e4_combined_features():
         training_results.to_excel(path + f"{seperator.join(attributes)}_training.xlsx")
         testing_results.to_excel(path + f"{seperator.join(attributes)}_testing.xlsx")
 
-
 def e4_2_combined_features_refined():
     path = "data/results/raw_combined_features_refined_3/"
 
@@ -498,6 +497,9 @@ def e4_2_combined_features_refined():
         seperator = "-"        
         training_results.to_excel(path + f"{seperator.join(attributes)}_training.xlsx")
         testing_results.to_excel(path + f"{seperator.join(attributes)}_testing.xlsx")
+
+def e5_model_comparison():
+    pass
 
 def plots_and_stats(experiment_name, name_of_independent, folder, log_scale=True):    
     training_dict = {}
@@ -583,14 +585,14 @@ if __name__ == "__main__":
     # experiment_3()
     # e3_sentiment_features()
     # e4_combined_features()
-    e4_2_combined_features_refined()
+    # e4_2_combined_features_refined()
     # plots_and_stats("Learning Rate Narrow Search", "Learning Rate", "data/results/learning_rate_narrow_search")
     # plots_and_stats("Learning Rate Broad Search", "Learning Rate", "data/results/learning_rate_broad_search")
     # plots_and_stats("Gamma Broad Search", "Gamma", "data/results/gamma_broad_search")
     # plots_and_stats("Technical Indicators Comparison", "Indicator", "data/results/technical_indicators", log_scale=False)
     # plots_and_stats("Raw sent", "Feature", "data/results/raw_sentiment_features", log_scale=False)
     # plots_and_stats("Combined Features", "Feature", "data/results/combined_features", log_scale=False)
-    # plots_and_stats("Combined Features Refined", "Feature", "data/results/combined_features_refined", log_scale=False)
+    plots_and_stats("New Combined Features Refined", "Feature", "data/results/combined_refined_3", log_scale=False)
 
 
     # stocks = retrieve_stocks_from_folder("data/snp_stocks_full")

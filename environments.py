@@ -24,7 +24,7 @@ BASE_RATE = 0.02
 
 class PortfolioAllocationEnvironment(gym.Env):
     
-    def __init__(self, stocks, state_attributes):
+    def __init__(self, stocks, state_attributes, discrete=False):
         self.check_arguments_valid(stocks, state_attributes)
         self.starting_value = 1_000_000
         self.stocks = [s.reset_index() for s in stocks]
@@ -33,8 +33,12 @@ class PortfolioAllocationEnvironment(gym.Env):
         self.final_values = []
         self.annualized_returns = []
         self.sharpe_ratios = []
+        self.discrete = discrete
 
-        self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(len(self.stocks),))
+        if discrete:
+            self.action_space = spaces.Discrete(len(self.stocks))
+        else:
+            self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(len(self.stocks),))
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(len(self.state_attributes), len(self.stocks)))
     
     def reset(self):
@@ -55,16 +59,22 @@ class PortfolioAllocationEnvironment(gym.Env):
         if self.terminal: 
             raise Exception("Environment already in terminal state")
         
-        weights = self.softmax_normalization(action)
+        
         previous_index = self.date_index
         self.date_index += 1
 
-        previous_closes = np.array([s.loc[previous_index, 'close'] for s in self.stocks])
-        new_closes = np.array([s.loc[self.date_index, 'close'] for s in self.stocks])
-        portfolio_return = sum(((new_closes / previous_closes) - 1) * weights)
+        if discrete:
+            s = self.stocks[action]
+            previous_close = s.loc[previous_index, 'close']
+            new_close = s.loc[self.date_index, 'close']
+            portfolio_return = (new_close / previous_close) - 1
+        else:
+            weights = self.softmax_normalization(action)
+            previous_closes = np.array([s.loc[previous_index, 'close'] for s in self.stocks])
+            new_closes = np.array([s.loc[self.date_index, 'close'] for s in self.stocks])
+            portfolio_return = sum(((new_closes / previous_closes) - 1) * weights)
 
         change_in_value = self.portfolio_value * portfolio_return
-
         self.portfolio_value *= (1 + portfolio_return)
 
         # Memory management
