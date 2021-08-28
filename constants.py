@@ -1,9 +1,7 @@
 import os
 
-E_MIN = 60
-E_HOUR = 60 * E_MIN
-E_DAY = 24 * E_HOUR
-E_YEAR = 365 * E_DAY
+TRADING_DAYS = 252
+BASE_RATE = 0.02
 
 # Data Scraping
 

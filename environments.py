@@ -16,8 +16,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from stable_baselines3.common.vec_env import DummyVecEnv
 
-TRADING_DAYS = 252
-BASE_RATE = 0.02
+# TRADING_DAYS = 252
+# BASE_RATE = 0.02
 # YEAR_RANGES = [(59 + (year_index*ANNUAL_TRADING_DAYS), 59 + ((year_index+1)*ANNUAL_TRADING_DAYS)) for year_index in range(7)]
 # TRAINING_YEARS = YEAR_RANGES[:5]
 # TESTING_YEARS = YEAR_RANGES[5:]
