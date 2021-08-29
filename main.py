@@ -637,11 +637,11 @@ def plots_and_stats(experiment_name, name_of_independent, folder, log_scale=True
     plt.clf()
 
     # Plot testing
-    testing_stats = pd.DataFrame({"Agent": ["Average Return", "Std Devs", "Sample Size", "Sample mean std devs"]})
+    testing_stats = pd.DataFrame({"Agent": ["Average Return", "Std Devs", "Sample Size", "SM Std Devs", "Average Sharpe Ratio", "Sharpe Ration SM std Devs"]})
     average_final_values = []
     errs = []
-    low_errs = []
-    high_errs = []
+    average_sharpe_ratio_values = []
+    sr_errs = []
     names = []
     for name in testing_dict:
         df = testing_dict[name]
@@ -652,16 +652,29 @@ def plots_and_stats(experiment_name, name_of_independent, folder, log_scale=True
         std_dev = np.std(returns)
         err = std_dev / math.sqrt(len(returns))
         errs.append(err)
+
+        sharpe_ratios = [df[x][2] for x in range(1,len(df.columns))]
+        average_sharpe_ratio = sum(sharpe_ratios) / len(sharpe_ratios)
+        average_sharpe_ratio_values.append(average_sharpe_ratio)
+        sr_err = np.std(sharpe_ratios) / math.sqrt(len(sharpe_ratios))
+        sr_errs.append(sr_err)
         
-        low_errs.append(err)
-        high_errs.append(err)
         names.append(name)
-        testing_stats[name] = [average, std_dev, len(returns), err]
+        testing_stats[name] = [average, std_dev, len(returns), err, average_sharpe_ratio, sr_err]
     title = f"{experiment_name} Testing"
     # plt.title(title)
     if log_scale: plt.xscale('log')
-    plt.barh(names, average_final_values, xerr=[low_errs, high_errs], ec="black", capsize=5)
+    plt.barh(names, average_final_values, xerr=errs, ec="black", capsize=5)
     plt.xlabel("Average Return")
+    plt.ylabel(name_of_independent)
+    plt.tight_layout()
+    plt.savefig(f"data/plots/{title}")
+    plt.clf()
+    title = f"{experiment_name} Testing Sharpe Ratios"
+    # plt.title(title)
+    if log_scale: plt.xscale('log')
+    plt.barh(names, average_sharpe_ratio_values, xerr=sr_errs, ec="black", capsize=5)
+    plt.xlabel("Average Sharpe Ratio")
     plt.ylabel(name_of_independent)
     plt.tight_layout()
     plt.savefig(f"data/plots/{title}")
@@ -686,7 +699,7 @@ if __name__ == "__main__":
     # plots_and_stats("Technical Indicators Comparison", "Indicator", "data/results/technical_indicators", log_scale=False)
     # plots_and_stats("Raw sent", "Feature", "data/results/raw_sentiment_features", log_scale=False)
     # plots_and_stats("Combined Features", "Feature", "data/results/combined_features", log_scale=False)
-    plots_and_stats("New Combined Features Refined", "Feature", "data/results/combined_refined_3", log_scale=False)
+    plots_and_stats("Combined Features Refined", "Feature", "data/results/combined_features_refined", log_scale=False)
 
 
     # stocks = retrieve_stocks_from_folder("data/snp_stocks_full")
