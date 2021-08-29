@@ -133,6 +133,7 @@ if __name__ == "__main__":
     # e3_sentiment_features()
     # e4_combined_features()
     # e4_2_combined_features_refined()
+    e5_model_comparison()
     # plots_and_stats("Learning Rate Narrow Search", "Learning Rate", "data/results/learning_rate_narrow_search")
     # plots_and_stats("Learning Rate Broad Search", "Learning Rate", "data/results/learning_rate_broad_search")
     # plots_and_stats("Gamma Broad Search", "Gamma", "data/results/gamma_broad_search")
