@@ -337,7 +337,7 @@ def e5_model_comparison():
     # Agents
     # DQN Untrained
     testing_results = pd.DataFrame({"Values": ["Final Value", "Annualized Return", "Sharpe Ratio"]})
-    for i in range(repeats):
+    for i in range(100): # Increased
         train_env = PortfolioAllocationEnvironment(train_dfs, attributes, discrete=True)
         train_env.reset()
         model = DQN('MlpPolicy', train_env, verbose=0, learning_rate=0.0001, gamma=0)

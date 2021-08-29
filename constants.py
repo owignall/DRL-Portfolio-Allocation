@@ -12,12 +12,8 @@ BASE_RATE = 0.02
 
 MONTHS = {'jan': "01", 'feb': "02", 'mar': "03", 'apr': "04", 'may': "05", 'jun': "06", 'jul': "07", 'aug': "08", 'sep': "09",  'oct': "10", 'nov': "11", 'dec': "12"}
 
-STANDARD_HEADERS = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.0 Safari/537.36'}
-
-GOOGLE_HEADERS = {
-    'cookie': 'CONSENT=YES+cb.20210727-07-p1.en+FX+232; 1P_JAR=2021-07-29-20; NID=220=IejjYDNZoeiOPhcOHqIC6lQoOU1wblHSv2dlAMLzR9daG7JFjh43rzykeiGRH-mZZ8ZCOPwCXeOxli1CxVkHN6jser1LxE41gkABFLccZsNaGgnajJPsD9LN_4-byjEdPJsAv_k1gnzFzXtjukkroowbISEIDnSQiplLI-h97Us1abCR',
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36 Edg/92.0.902.55'
-}
+STANDARD_HEADERS = {'User-Agent':('Mozilla/5.0 (Windows NT 6.1; WOW64)'
+    ' AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2227.0 Safari/537.36')}
 
 folder_contents = os.listdir("other/chromedriver")
 files = [file for file in folder_contents if file.startswith("chromedriver")]

@@ -26,8 +26,8 @@ class PortfolioAllocationEnvironment(gym.Env):
         self.final_values = []
         self.annualized_returns = []
         self.sharpe_ratios = []
-        self.discrete = discrete
 
+        self.discrete = discrete
         if self.discrete:
             self.action_space = spaces.Discrete(len(self.stocks))
         else:
@@ -36,9 +36,7 @@ class PortfolioAllocationEnvironment(gym.Env):
     
     def reset(self):
         self.date_index = 0
-
         self.portfolio_value = self.starting_value 
-
         self.state = self.get_state()
         self.terminal = False
         self.return_memory = [0]
@@ -51,7 +49,6 @@ class PortfolioAllocationEnvironment(gym.Env):
     def step(self, action):
         if self.terminal: 
             raise Exception("Environment already in terminal state")
-        
         
         previous_index = self.date_index
         self.date_index += 1
@@ -100,10 +97,6 @@ class PortfolioAllocationEnvironment(gym.Env):
     
     @staticmethod
     def softmax_normalization(actions):
-        # """Taken from other environment"""
-        # numerator = np.exp(actions)
-        # denominator = np.sum(np.exp(actions))
-        # softmax_output = numerator / denominator
         a = actions.astype('float64')
         return np.exp(actions) /np.sum(np.exp(a))
     
