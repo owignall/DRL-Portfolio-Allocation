@@ -133,15 +133,15 @@ if __name__ == "__main__":
     # e3_sentiment_features()
     # e4_combined_features()
     # e4_2_combined_features_refined()
-    e5_model_comparison()
+    # e5_model_comparison()
     # plots_and_stats("Learning Rate Narrow Search", "Learning Rate", "data/results/learning_rate_narrow_search")
     # plots_and_stats("Learning Rate Broad Search", "Learning Rate", "data/results/learning_rate_broad_search")
     # plots_and_stats("Gamma Broad Search", "Gamma", "data/results/gamma_broad_search")
     # plots_and_stats("Technical Indicators Comparison", "Indicator", "data/results/technical_indicators", log_scale=False)
     # plots_and_stats("Raw sent", "Feature", "data/results/raw_sentiment_features", log_scale=False)
     # plots_and_stats("Combined Features", "Feature", "data/results/combined_features", log_scale=False)
-    plots_and_stats("Combined Features Refined", "Feature", "data/results/combined_features_refined", log_scale=False)
-
+    # plots_and_stats("Combined Features Refined", "Feature", "data/results/combined_features_refined", log_scale=False)
+    plots_and_stats("Model Comparison", "Model", "data/results/raw_model_comparison", log_scale=False)
 
     # stocks = retrieve_stocks_from_folder("data/snp_stocks_full")
     # print(stocks[0].df.columns)
@@ -151,6 +151,31 @@ if __name__ == "__main__":
     #     save_stock(s, "data/snp_50_stocks_full")
 
 
-    # print(len(stocks_50))
-    # for s in stocks:
-    #     print(s.code)
+    # path = "data/results/TEMP/"
+
+    # attributes = ['normalized_rsi', 'std_devs_out', 'relative_vol', 
+    #     'hf_google_articles_score', 'vader_google_articles_score', 'ranking_score']
+    # repeats = 100
+    # total_training_steps = 300_000
+    # stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full_updated")
+
+    # train_dfs = [s.df.loc[100:1000] for s in stocks[:]]
+    # train_episodes = total_training_steps // (len(train_dfs[0]) - 1)
+    # test_dfs = [s.df.loc[1000:] for s in stocks[:]]
+
+    # # Agents
+    # # DQN Untrained
+    # testing_results = pd.DataFrame({"Values": ["Final Value", "Annualized Return", "Sharpe Ratio"]})
+    # for i in range(repeats):
+    #     train_env = PortfolioAllocationEnvironment(train_dfs, attributes, discrete=True)
+    #     train_env.reset()
+    #     model = DQN('MlpPolicy', train_env, verbose=0, learning_rate=0.0001, gamma=0)
+    #     test_env = PortfolioAllocationEnvironment(train_dfs, attributes, discrete=True)
+    #     obs = test_env.reset()
+    #     while True:
+    #         action, _state = model.predict(obs, deterministic=True)
+    #         obs, reward, done, info = test_env.step(action)
+    #         if done:
+    #             break
+    #     testing_results[i + 1] = [test_env.portfolio_value, test_env.annualized_return, test_env.sharpe_ratio]
+    # testing_results.to_excel(path + f"DQN Untrained_testing.xlsx")
