@@ -1,4 +1,9 @@
+"""
+
+"""
+
 import os
+
 
 TRADING_DAYS = 252
 BASE_RATE = 0.02
