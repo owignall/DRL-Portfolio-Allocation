@@ -507,6 +507,8 @@ class Stock:
 
     @staticmethod
     def get_google_news_driver(headless=False):
+        if WEBDRIVER_PATH == "other/chromedriver/":
+            raise Exception("No webdriver found, add webdriver file to other/chromedriver folder")
         # Setup webdriver
         options = webdriver.ChromeOptions()
         if headless: options.add_argument('headless')
