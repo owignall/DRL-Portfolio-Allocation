@@ -126,6 +126,7 @@ def plots_and_stats(experiment_name, name_of_independent, folder, log_scale=True
     testing_stats.to_excel(f"data/testing_stats/{experiment_name}.xlsx")
 
 if __name__ == "__main__":
+    print("Ran")
     # snp_stocks_full()
     # experiment_1()
     # experiment_2()
@@ -141,7 +142,7 @@ if __name__ == "__main__":
     # plots_and_stats("Raw sent", "Feature", "data/results/raw_sentiment_features", log_scale=False)
     # plots_and_stats("Combined Features", "Feature", "data/results/combined_features", log_scale=False)
     # plots_and_stats("Combined Features Refined", "Feature", "data/results/combined_features_refined", log_scale=False)
-    plots_and_stats("Model Comparison", "Model", "data/results/raw_model_comparison", log_scale=False)
+    # plots_and_stats("Model Comparison", "Model", "data/results/raw_model_comparison", log_scale=False)
 
     # stocks = retrieve_stocks_from_folder("data/snp_stocks_full")
     # print(stocks[0].df.columns)
