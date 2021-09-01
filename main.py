@@ -166,7 +166,7 @@ if __name__ == "__main__":
     #     'hf_google_articles_score', 'vader_google_articles_score', 'ranking_score']
     # repeats = 100
     # total_training_steps = 300_000
-    # stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full_updated")
+    # stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full")
 
     # train_dfs = [s.df.loc[100:1000] for s in stocks[:]]
     # train_episodes = total_training_steps // (len(train_dfs[0]) - 1)

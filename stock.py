@@ -33,7 +33,7 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
 class Stock:
-    def __init__(self, name, code, ic_name, start_date="2014-01-01", end_date="2021-01-01", df=pd.DataFrame(), search_term=None, driver=None):
+    def __init__(self, name, code, ic_name="", start_date="2014-01-01", end_date="2021-01-01", df=pd.DataFrame(), search_term=None, driver=None):
         self.name = name
         self.code = code
         self.ic_name = ic_name
@@ -537,9 +537,9 @@ if __name__ == "__main__":
     print(stocks[0].df.columns)
     # for s in stocks:
     #     s.calculate_news_sentiment(hugging_face=False, text_blob=True, vader=True)
-    #     save_stock(s, "data/snp_50_stocks_full_updated")
+    #     save_stock(s, "data/snp_50_stocks_full")
 
-    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full_updated")
+    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full")
     print(stocks[0].df.columns)
     # stocks = [Stock(*sa) for sa in SNP_500_TOP_100]
 

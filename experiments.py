@@ -149,7 +149,7 @@ def e3_sentiment_features():
     total_training_steps = 150_000
     alpha = 0.0005
     gamma = 0
-    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full_updated")
+    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full")
 
     train_dfs = [s.df.loc[100:1000] for s in stocks[:]]
     train_episodes = total_training_steps // (len(train_dfs[0]) - 1)
@@ -210,7 +210,7 @@ def e4_combined_features():
     total_training_steps = 300_000
     alpha = 0.0005
     gamma = 0
-    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full_updated")
+    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full")
 
     train_dfs = [s.df.loc[100:1000] for s in stocks[:]]
     train_episodes = total_training_steps // (len(train_dfs[0]) - 1)
@@ -272,7 +272,7 @@ def e4_2_combined_features_refined():
     total_training_steps = 500_000
     alpha = 0.0005
     gamma = 0
-    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full_updated")
+    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full")
 
     train_dfs = [s.df.loc[100:1000] for s in stocks[:]]
     train_episodes = total_training_steps // (len(train_dfs[0]) - 1)
@@ -328,7 +328,7 @@ def e5_model_comparison():
         'hf_google_articles_score', 'vader_google_articles_score', 'ranking_score']
     repeats = 20
     total_training_steps = 300_000
-    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full_updated")
+    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full")
 
     train_dfs = [s.df.loc[100:1000] for s in stocks[:]]
     train_episodes = total_training_steps // (len(train_dfs[0]) - 1)
