@@ -326,7 +326,7 @@ def e5_model_comparison():
 
     attributes = ['normalized_rsi', 'std_devs_out', 'relative_vol', 
         'hf_google_articles_score', 'vader_google_articles_score', 'ranking_score']
-    repeats = 10
+    repeats = 20
     total_training_steps = 300_000
     stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full_updated")
 

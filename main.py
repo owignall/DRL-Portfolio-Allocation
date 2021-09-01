@@ -39,7 +39,7 @@ def snp_stocks_full():
         print(s.code)
         time.sleep(throttle)
 
-def plots_and_stats(experiment_name, name_of_independent, folder, log_scale=True):    
+def plots_and_stats(experiment_name, name_of_independent, folder, log_scale=True, include_sr=True):    
     training_dict = {}
     testing_dict = {}
     for file in listdir(folder):
@@ -81,7 +81,9 @@ def plots_and_stats(experiment_name, name_of_independent, folder, log_scale=True
     plt.clf()
 
     # Plot testing
-    testing_stats = pd.DataFrame({"Agent": ["Average Return", "Std Devs", "Sample Size", "SM Std Devs", "Average Sharpe Ratio", "Sharpe Ration SM std Devs"]})
+    if include_sr:
+        testing_stats = pd.DataFrame({"Agent": ["Average Return", "Std Devs", "Sample Size", "SM Std Devs", "Average Sharpe Ratio", "Sharpe Ration SM std Devs"]})
+    else: testing_stats = pd.DataFrame({"Agent": ["Average Return", "Std Devs", "Sample Size", "SM Std Devs"]})
     average_final_values = []
     errs = []
     average_sharpe_ratio_values = []
@@ -97,14 +99,18 @@ def plots_and_stats(experiment_name, name_of_independent, folder, log_scale=True
         err = std_dev / math.sqrt(len(returns))
         errs.append(err)
 
-        sharpe_ratios = [df[x][2] for x in range(1,len(df.columns))]
-        average_sharpe_ratio = sum(sharpe_ratios) / len(sharpe_ratios)
-        average_sharpe_ratio_values.append(average_sharpe_ratio)
-        sr_err = np.std(sharpe_ratios) / math.sqrt(len(sharpe_ratios))
-        sr_errs.append(sr_err)
+        if include_sr:
+            sharpe_ratios = [df[x][2] for x in range(1,len(df.columns))]
+            average_sharpe_ratio = sum(sharpe_ratios) / len(sharpe_ratios)
+            average_sharpe_ratio_values.append(average_sharpe_ratio)
+            sr_err = np.std(sharpe_ratios) / math.sqrt(len(sharpe_ratios))
+            sr_errs.append(sr_err)
         
         names.append(name)
-        testing_stats[name] = [average, std_dev, len(returns), err, average_sharpe_ratio, sr_err]
+
+        if include_sr:
+            testing_stats[name] = [average, std_dev, len(returns), err, average_sharpe_ratio, sr_err]
+        else: testing_stats[name] = [average, std_dev, len(returns), err]
     title = f"{experiment_name} Testing"
     # plt.title(title)
     if log_scale: plt.xscale('log')
@@ -114,16 +120,17 @@ def plots_and_stats(experiment_name, name_of_independent, folder, log_scale=True
     plt.tight_layout()
     plt.savefig(f"data/plots/{title}")
     plt.clf()
-    title = f"{experiment_name} Testing Sharpe Ratios"
-    # plt.title(title)
-    if log_scale: plt.xscale('log')
-    plt.barh(names, average_sharpe_ratio_values, xerr=sr_errs, ec="black", capsize=5)
-    plt.xlabel("Average Sharpe Ratio")
-    plt.ylabel(name_of_independent)
-    plt.tight_layout()
-    plt.savefig(f"data/plots/{title}")
-    plt.clf()
-    testing_stats.to_excel(f"data/testing_stats/{experiment_name}.xlsx")
+    if include_sr:
+        title = f"{experiment_name} Testing Sharpe Ratios"
+        # plt.title(title)
+        if log_scale: plt.xscale('log')
+        plt.barh(names, average_sharpe_ratio_values, xerr=sr_errs, ec="black", capsize=5)
+        plt.xlabel("Average Sharpe Ratio")
+        plt.ylabel(name_of_independent)
+        plt.tight_layout()
+        plt.savefig(f"data/plots/{title}")
+        plt.clf()
+        testing_stats.to_excel(f"data/testing_stats/{experiment_name}.xlsx")
 
 if __name__ == "__main__":
     print("Ran")
@@ -143,6 +150,7 @@ if __name__ == "__main__":
     # plots_and_stats("Combined Features", "Feature", "data/results/combined_features", log_scale=False)
     # plots_and_stats("Combined Features Refined", "Feature", "data/results/combined_features_refined", log_scale=False)
     # plots_and_stats("Model Comparison", "Model", "data/results/raw_model_comparison", log_scale=False)
+    plots_and_stats("Sentiment Features Comparison", "Feature", "data/results/sentiment_features", log_scale=False, include_sr=False)
 
     # stocks = retrieve_stocks_from_folder("data/snp_stocks_full")
     # print(stocks[0].df.columns)
