@@ -33,7 +33,8 @@ class PortfolioAllocationEnvironment(gym.Env):
         else:
             self.action_space = spaces.Box(low=-np.inf, high=np.inf, shape=(len(self.stocks),))
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(len(self.state_attributes), len(self.stocks)))
-    
+        self.reset()
+        
     def reset(self):
         self.date_index = 0
         self.portfolio_value = self.starting_value 

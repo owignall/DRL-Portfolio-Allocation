@@ -89,3 +89,31 @@ attributes = ['normalized_rsi', 'std_devs_out', 'relative_vol', 'hf_google_artic
 
 env = PortfolioAllocationEnvironment(dfs, attributes, discrete=True)
 ```
+
+## Using Environment
+
+To use this environment with a deep reinforcement learning agent the data should be split into a testing and training set and two different environments can be constructed. An agent can then be trained on the first environment and tested on the second environment. An example of this process is provided below using an agent from Stable Baselines 3.
+
+```python
+from stable_baselines3 import A2C
+
+# Create and Train Agent
+attributes = ['std_devs_out', 'vader_google_articles_score']
+train_dfs = [s.df.loc[100:1000] for s in stocks[:]]
+train_env = PortfolioAllocationEnvironment(
+        train_dfs, attributes, discrete=False)
+model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=0.0005, gamma=0)
+model.learn(total_timesteps=100_000)
+
+# Test Agent
+test_dfs = [s.df.loc[1000:] for s in stocks[:]]
+test_env = PortfolioAllocationEnvironment(
+        test_dfs, attributes, discrete=False)
+obs = test_env.reset()
+while True:
+    action, _state = model.predict(obs, deterministic=True)
+    obs, reward, done, info = test_env.step(action)
+    if done:
+        break
+print(test_env.annualized_return)
+```

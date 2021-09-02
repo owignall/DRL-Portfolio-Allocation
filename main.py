@@ -133,58 +133,22 @@ def plots_and_stats(experiment_name, name_of_independent, folder, log_scale=True
         testing_stats.to_excel(f"data/testing_stats/{experiment_name}.xlsx")
 
 if __name__ == "__main__":
-    print("Ran")
-    # snp_stocks_full()
-    # experiment_1()
-    # experiment_2()
-    # experiment_3()
-    # e3_sentiment_features()
-    # e4_combined_features()
-    # e4_2_combined_features_refined()
-    # e5_model_comparison()
-    # plots_and_stats("Learning Rate Narrow Search", "Learning Rate", "data/results/learning_rate_narrow_search")
-    # plots_and_stats("Learning Rate Broad Search", "Learning Rate", "data/results/learning_rate_broad_search")
-    # plots_and_stats("Gamma Broad Search", "Gamma", "data/results/gamma_broad_search")
-    # plots_and_stats("Technical Indicators Comparison", "Indicator", "data/results/technical_indicators", log_scale=False)
-    # plots_and_stats("Raw sent", "Feature", "data/results/raw_sentiment_features", log_scale=False)
-    # plots_and_stats("Combined Features", "Feature", "data/results/combined_features", log_scale=False)
-    # plots_and_stats("Combined Features Refined", "Feature", "data/results/combined_features_refined", log_scale=False)
-    # plots_and_stats("Model Comparison", "Model", "data/results/raw_model_comparison", log_scale=False)
-    plots_and_stats("Sentiment Features Comparison", "Feature", "data/results/sentiment_features", log_scale=False, include_sr=False)
+    # Example Use Case
+    # Create and Train Agent
+    attributes = ['std_devs_out', 'vader_google_articles_score']
+    train_dfs = [s.df.loc[100:1000] for s in stocks[:]]
+    train_env = PortfolioAllocationEnvironment(
+            train_dfs, attributes, discrete=False)
+    model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=0.0005, gamma=0)
+    model.learn(total_timesteps=100_000)
 
-    # stocks = retrieve_stocks_from_folder("data/snp_stocks_full")
-    # print(stocks[0].df.columns)
-    # stocks_50 = [s for s in stocks if s.code in [sa[1] for sa in SNP_500_TOP_100[:50]]]
-    # for s in stocks_50:
-    #     print(s.code)
-    #     save_stock(s, "data/snp_50_stocks_full")
-
-
-    # path = "data/results/TEMP/"
-
-    # attributes = ['normalized_rsi', 'std_devs_out', 'relative_vol', 
-    #     'hf_google_articles_score', 'vader_google_articles_score', 'ranking_score']
-    # repeats = 100
-    # total_training_steps = 300_000
-    # stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full")
-
-    # train_dfs = [s.df.loc[100:1000] for s in stocks[:]]
-    # train_episodes = total_training_steps // (len(train_dfs[0]) - 1)
-    # test_dfs = [s.df.loc[1000:] for s in stocks[:]]
-
-    # # Agents
-    # # DQN Untrained
-    # testing_results = pd.DataFrame({"Values": ["Final Value", "Annualized Return", "Sharpe Ratio"]})
-    # for i in range(repeats):
-    #     train_env = PortfolioAllocationEnvironment(train_dfs, attributes, discrete=True)
-    #     train_env.reset()
-    #     model = DQN('MlpPolicy', train_env, verbose=0, learning_rate=0.0001, gamma=0)
-    #     test_env = PortfolioAllocationEnvironment(train_dfs, attributes, discrete=True)
-    #     obs = test_env.reset()
-    #     while True:
-    #         action, _state = model.predict(obs, deterministic=True)
-    #         obs, reward, done, info = test_env.step(action)
-    #         if done:
-    #             break
-    #     testing_results[i + 1] = [test_env.portfolio_value, test_env.annualized_return, test_env.sharpe_ratio]
-    # testing_results.to_excel(path + f"DQN Untrained_testing.xlsx")
+    # Test Agent
+    test_dfs = [s.df.loc[1000:] for s in stocks[:]]
+    test_env = PortfolioAllocationEnvironment(
+            test_dfs, attributes, discrete=False)
+    obs = test_env.reset()
+    while True:
+        action, _state = model.predict(obs, deterministic=True)
+        obs, reward, done, info = test_env.step(action)
+        if done:
+            break
