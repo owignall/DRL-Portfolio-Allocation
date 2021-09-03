@@ -7,12 +7,8 @@ import random
 
 import numpy as np
 import pandas as pd
-from gym.utils import seeding
 import gym
 from gym import spaces
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 
 class PortfolioAllocationEnvironment(gym.Env):

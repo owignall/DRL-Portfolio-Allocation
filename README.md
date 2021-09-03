@@ -1,6 +1,6 @@
 # Overview
 
-The key features of this repository are listed below.
+The key features of this software are listed below.
 
 - Class for stock data extraction, processing and storage.
 - Portfolio allocation environment for deep reinforcement learning with either discrete or continuous action spaces.

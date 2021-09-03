@@ -135,14 +135,14 @@ def plots_and_stats(experiment_name, name_of_independent, folder, log_scale=True
 if __name__ == "__main__":
     # Example Use Case
     # Create and Train Agent
+    stocks = retrieve_stocks_from_folder("data/snp_50_stocks_full")
     attributes = ['std_devs_out', 'vader_google_articles_score']
     train_dfs = [s.df.loc[100:1000] for s in stocks[:]]
     train_env = PortfolioAllocationEnvironment(
             train_dfs, attributes, discrete=False)
     model = A2C('MlpPolicy', train_env, verbose=0, learning_rate=0.0005, gamma=0)
-    model.learn(total_timesteps=100_000)
 
-    # Test Agent
+    # Test Untrained Agent
     test_dfs = [s.df.loc[1000:] for s in stocks[:]]
     test_env = PortfolioAllocationEnvironment(
             test_dfs, attributes, discrete=False)
@@ -152,3 +152,17 @@ if __name__ == "__main__":
         obs, reward, done, info = test_env.step(action)
         if done:
             break
+    print("Untrained:", test_env.annualized_return)
+
+    # Test Trained Agent
+    model.learn(total_timesteps=100_000)
+    test_dfs = [s.df.loc[1000:] for s in stocks[:]]
+    test_env = PortfolioAllocationEnvironment(
+            test_dfs, attributes, discrete=False)
+    obs = test_env.reset()
+    while True:
+        action, _state = model.predict(obs, deterministic=True)
+        obs, reward, done, info = test_env.step(action)
+        if done:
+            break
+    print("Trained:", test_env.annualized_return)
