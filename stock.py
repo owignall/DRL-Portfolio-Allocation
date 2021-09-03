@@ -1,10 +1,8 @@
 """
-TO DO
-
-COULD DO
-    - Look at papers which use financial data for DRL
-    - Extraction of financial data
-    - Consider other article content extraction
+This class is used primarily for the extraction and processing of stock data. It can extract price
+and volumes data as well as investment ratings and news headlines. This data can then be
+processed to produce technical indicators and daily sentiment values from both news headlines
+and investment ratings.
 """
 
 from constants import *

@@ -1,5 +1,6 @@
 """
-
+This file contains the constants used in the software. For instance, it includes a dictionary for
+converting investment ratings to values and a list of the top 100 S&P 500 stocks.
 """
 
 import os

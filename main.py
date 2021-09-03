@@ -1,9 +1,5 @@
 """
-Plan for this file.
-    1. Create portfolio object from universe of presaved stocks
-    2. Create agent objects
-    3. Train agents.
-    4. Test agent performance
+Contains function for plotting of results and also includes an example use case.
 """
 
 from experiments import *
@@ -24,20 +20,8 @@ def snp_stocks_basic():
     for i in range(0, len(SNP_500_TOP_100)):
         s = Stock(*SNP_500_TOP_100[i])
         s.extract_and_calculate_basic(verbose=False)
-        s.calculate_cheat_values()
         save_stock(s, "data/snp_stocks_basic")
         print(s.code)
-
-def snp_stocks_full():
-    throttle = 60 * 7
-    driver = Stock.get_google_news_driver(headless=False)
-    for i in range(86, len(SNP_500_TOP_100)):
-        s = Stock(*SNP_500_TOP_100[i], driver=driver)
-        # s = Stock(*SNP_500_TOP_100[i])
-        s.extract_and_calculate_all(verbose=False)
-        save_stock(s, "data/snp_stocks_full")
-        print(s.code)
-        time.sleep(throttle)
 
 def plots_and_stats(experiment_name, name_of_independent, folder, log_scale=True, include_sr=True):    
     training_dict = {}

@@ -1,10 +1,12 @@
 """
-This file contains specialised trading evironments for the agents to interact with directly.
+This is the environment class that can be used by deep reinforcement learning agents. It
+follows the Gym framework and can be instantiated with either a discrete or continuous action
+space. It also tracks the performance of all the episodes run on it.
 """
 
 from stock import *
-import random
 
+import random
 import numpy as np
 import pandas as pd
 import gym
@@ -105,97 +107,3 @@ class PortfolioAllocationEnvironment(gym.Env):
             for a in state_attributes:
                 if a not in stock.columns:
                     raise ValueError(f"State attribute {a} not available in at least one stock.")
-
-
-if __name__ == "__main__":
-    
-    stocks = retrieve_stocks_from_folder("data\snp_stocks_basic")
-    # stocks = retrieve_stocks_from_folder("data\snp_stocks_full")
-
-    dfs = [s.df.loc[1000:] for s in stocks[:]]
-    env = PortfolioAllocationEnvironment(dfs, ['ranking_score', 'ranking_change_score', 'cheats'])
-
-
-
-    obs = env.reset()
-    while True:
-        action = np.array([1 for _ in range(len(env.stocks))])
-        obs, reward, done, info = env.step(action)
-        if done:
-            break
-    print("Even Actions", env.portfolio_value)
-
-    # obs = env.reset()
-    # print(obs)
-    # while True:
-    #     action = [1 for _ in range(len(env.stocks))]
-    #     obs, reward, done, info = env.step(action)
-    #     if done:
-    #         break
-    # print("Even Actions", env.portfolio_value)
-    # plt.plot(env.value_memory, label="Even Actions")
-
-    # obs = env.reset()
-    # while True:
-    #     action = [random.random() for _ in range(len(env.stocks))]
-    #     obs, reward, done, info = env.step(action)
-    #     if done:
-    #         break
-    # print("Random Actions", env.portfolio_value)
-    # plt.plot(env.value_memory, label="Random Actions")
-
-    # obs = env.reset()
-    # while True:
-    #     action = [random.uniform(-5,5) for _ in range(len(env.stocks))]
-    #     obs, reward, done, info = env.step(action)
-    #     if done:
-    #         break
-    # print("Very Random Actions", env.portfolio_value)
-    # plt.plot(env.value_memory, label="Very Random Actions")
-
-    
-    # if len(obs) >= 3:
-    #     sigmoid_v = np.vectorize(lambda x: 1 / (1 + math.exp(-x)))
-    #     obs = env.reset()
-    #     while True:
-    #         # action = sigmoid_v(obs[0])
-    #         action = obs[0]
-    #         obs, reward, done, info = env.step(action)
-    #         if done:
-    #             break
-    #     print("New Score Actions", env.portfolio_value)
-    #     plt.plot(env.value_memory, label="New Score Actions")
-
-
-    # obs = env.reset()
-    # while True:
-    #     # action = sigmoid_v(obs[1])
-    #     action = obs[1] * 3
-    #     obs, reward, done, info = env.step(action)
-    #     if done:
-    #         break
-    # print("Change Score Actions", env.portfolio_value)
-    # plt.plot(env.value_memory, label="Change Score Actions")
-
-    # obs = env.reset()
-    # while True:
-    #     # action = sigmoid_v(obs[1])
-    #     action = obs[2] * 3
-    #     obs, reward, done, info = env.step(action)
-    #     if done:
-    #         break
-    # print("Cheat Actions", env.portfolio_value)
-    # plt.plot(env.value_memory, label="Cheat Actions")
-
-
-    # title = f"Comparison {len(env.stocks)}"
-    # plt.title(title)
-    # plt.xlabel("Steps")
-    # plt.ylabel("Return")
-    # plt.legend()
-    # plt.savefig(f"{title}")
-    # plt.clf()
-
-
-
-

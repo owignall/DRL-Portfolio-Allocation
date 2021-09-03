@@ -1,5 +1,5 @@
 """
-
+This file contains function that were used to conduct the experiments.
 """
 
 from environments import *
@@ -7,9 +7,6 @@ from environments import *
 import os
 import pandas as pd
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
-matplotlib.use('Agg')
 import datetime
 from datetime import datetime as dt
 

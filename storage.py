@@ -1,5 +1,6 @@
 """
-Provides for storage and retrieval of objects such as stocks
+These functions are used to store and retrieve Stock objects which may contain stock data. A
+function is also included to extract all stock objects from a given folder.
 """
 
 import dill
