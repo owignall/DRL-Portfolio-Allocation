@@ -6,6 +6,8 @@ The key features of this software are listed below.
 - Portfolio allocation environment for deep reinforcement learning with either discrete or continuous action spaces.
 - Dataset for the top 50 S&P 500 stocks including price data, volumes data and news headlines; as well as technical indicators and sentiment scores derived from this data.
 
+The findings of this research project can be found in the [Dissertation](Dissertation.pdf).
+
 # Installation
 
 To install the project using pip with python the following steps should be followed.
